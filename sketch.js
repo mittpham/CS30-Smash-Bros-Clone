@@ -10,6 +10,10 @@
 // https://ultimateframedata.com/stats - character statistics
 // https://www.jeffreythompson.org/collision-detection/rect-rect.php - rect/rect collision detection
 
+// Things to do:
+// Get rid of magic numbers for keys
+// Fix fastfall condition
+
 // Canvas constants
 const SCREEN_WIDTH = 1920;
 const SCREEN_HEIGHT = 1080;
@@ -35,7 +39,7 @@ let marthStats = {
   friction: 0.886,
   gravity: 0.6,
   fallSpeed: 8,
-  fastFallSpeed: 2.528,
+  fastFallSpeed: 12.8,
   shortHopPower: -12,
   fullHopPower: -15,
   doubleJumpPower: -14,
@@ -103,6 +107,9 @@ class Player {
       // Cap the fall speed if player isn't fast falling
       if (this.velocity.y > this.stats.fallSpeed && !this.fastFalling) {
         this.velocity.limit(this.stats.fallSpeed);
+      }
+      else if (this.fastFalling) {
+        this.velocity.y = this.stats.fastFallSpeed;
       }
     }
   }
@@ -173,7 +180,6 @@ class Player {
 
       // State behavior
       this.airMovement();
-      this.fastFall();
 
       // State trigger
       if (this.position.y + this.stats.dimension / 2 >= STAGE_Y) {
@@ -239,7 +245,6 @@ class Player {
     // Condition to fastfall is player is either at the peak of their jump or falling
     if (this.velocity.y >= 0) {
       this.fastFalling = true;
-      this.velocity.y = this.stats.fastFallSpeed;
     }
   }
 
@@ -324,6 +329,8 @@ function draw() {
 
   // Display player
   player.display();
+
+  console.log(player.fastFalling);
 }
 
 // Handle player input
@@ -344,8 +351,12 @@ function keyPressed() {
   }
 
   // Fast falling
-  if (keyCode === 68) {
-    player.fastFall();
+  if (keyCode === 83) {
+
+    // Check that player is airborne
+    if (player.isAirborne) {
+      player.fastFall();
+    }
   }
 }
 
