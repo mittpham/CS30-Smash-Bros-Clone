@@ -16,8 +16,8 @@
 // Add landing lag for jumps - 4 frames
 
 // Canvas constants
-const SCREEN_WIDTH = 1280;
-const SCREEN_HEIGHT = 720;
+const SCREEN_WIDTH = 1440;
+const SCREEN_HEIGHT = 810;
 
 // Player constants and variables
 const SPAWN_X = 960;
@@ -28,12 +28,14 @@ const A_KEY = 65;
 const D_KEY = 68;
 const W_KEY = 87;
 const S_KEY = 83;
+const Q_KEY = 81;
+const E_KEY = 69;
 
 let player;
 
 // Stage constants and variables
-const STAGE_X = 240;
-const STAGE_Y = 500;
+const STAGE_X = 320;
+const STAGE_Y = 600;
 const STAGE_WIDTH = 800;
 const STAGE_HEIGHT = 50;
 
@@ -47,9 +49,9 @@ let marthStats = {
   gravity: 0.6,
   fallSpeed: 8,
   fastFallSpeed: 12.8,
-  shortHopPower: -12,
-  fullHopPower: -15,
-  doubleJumpPower: -15,
+  shortHopPower: -25,
+  fullHopPower: -40,
+  doubleJumpPower: -40,
   weight: 90,
   color: "blue",
   dimension: 40,
@@ -292,6 +294,15 @@ class Player {
       if (keyIsDown(W_KEY)) {
         this.velocity.y = this.stats.fullHopPower;
       }
+      else if (keyIsDown(Q_KEY) && keyIsDown(W_KEY)) {
+        this.velocity.y = this.stats.shortHopPower;
+      }
+      else if (keyIsDown(W_KEY) && keyIsDown(E_KEY)) {
+        this.velocity.y = this.stats.shortHopPower;
+      }
+      else if (keyIsDown(Q_KEY) && keyIsDown(E_KEY)) {
+        this.velocity.y = this.stats.shortHopPower;
+      }
       else {
         this.velocity.y = this.stats.shortHopPower;
       }
@@ -325,6 +336,11 @@ class Player {
     }
     if (this.state === "airborne") {
       this.velocity.x = constrain(this.velocity.x, -this.stats.airSpeed, this.stats.airSpeed);
+      this.velocity.y = constrain(this.velocity.y, -this.stats.fallSpeed, this.stats.fallSpeed);
+
+      if (this.fastFalling) {
+        this.velocity.y = constrain(this.velocity.y, -this.stats.fastFallSpeed, this.stats.fastFallSpeed);
+      }
     }
   }
 }
@@ -357,7 +373,7 @@ function draw() {
 function keyPressed() {
 
   // Jumping
-  if (keyCode === W_KEY) {
+  if (keyCode === W_KEY || keyCode === Q_KEY || keyCode === E_KEY) {
 
     // Ground jump
     if (player.jumpAvailable) {
