@@ -14,9 +14,11 @@
 // Adjust marths stats
 // Fix the ratio for stage - 1 meter in game is about 16 pixels
 // Add landing lag for jumps - 4 frames
-// Fix macro shortcuts for easier jumps
 // Create a "blast zone"
 // Fix spawn and death
+// prevent negative stocks
+// Turn stage collision into aabb to fall off the side
+// Add crouching
 
 // Canvas constants
 const SCREEN_WIDTH = 1440;
@@ -29,6 +31,8 @@ const SPAWN_X = 720;
 const SPAWN_Y = 200;
 const JUMPSQUAT_TIMER = 3;
 const LANDING_LAG_TIMER = 4;
+const SPAWNING_TIMER = 30;
+const INVINCIBILITY_TIMER = 300;
 const PLAYER_STOCKS = 3;
 const A_KEY = 65;
 const D_KEY = 68;
@@ -55,7 +59,7 @@ let marthStats = {
   runSpeed: 4,
   initialDash: 4.3,
   airAcceleration: 1,
-  airSpeed: 1.9,
+  airSpeed: 2.4,
   friction: 0.886,
   gravity: 0.6,
   fallSpeed: 8,
@@ -81,7 +85,7 @@ class Player {
     this.percentage = 0;
 
     // States
-    this.state = "idle"; // idle, running, airborne, jumpsquat, landing, dead, hitsun
+    this.state = "idle"; // idle, running, crouching, airborne, jumpsquat, landing, dead, hitsun
 
     // Flags/Conditions
     this.direction = true;
@@ -94,6 +98,8 @@ class Player {
     // Timers
     this.jumpSquatTimer = JUMPSQUAT_TIMER;
     this.landingLagTimer = LANDING_LAG_TIMER;
+    this.spawningTimer = SPAWNING_TIMER;
+    this.invincibilityTimer = INVINCIBILITY_TIMER;
   }
 
   // Display the player
@@ -114,6 +120,9 @@ class Player {
     // Constant gravity
     this.addGravity();
 
+    // Invincibility timer
+    this.countInvincibility();
+
     // Check state and behavior
     this.manageState();
 
@@ -123,7 +132,7 @@ class Player {
 
   // Add gravity to player
   addGravity() {
-    if (this.position.y + this.stats.dimension / 2 < STAGE_Y) {
+    if (this.position.y + this.stats.dimension / 2 < STAGE_Y && this.state !== "spawning") {
       this.velocity.y += this.stats.gravity;
 
       // Cap the fall speed if player isn't fast falling
@@ -133,6 +142,14 @@ class Player {
       else if (this.fastFalling) {
         this.velocity.y = this.stats.fastFallSpeed;
       }
+    }
+  }
+
+  // Count down timer for 5 seconds from spawning before removing i-frames
+  countInvincibility() {
+    this.invincibilityTimer--;
+    if (this.invincibilityTimer <= 0) {
+      this.invincible = false;
     }
   }
 
@@ -151,7 +168,9 @@ class Player {
       // State behavior
       this.velocity.x = 0;
       this.addFriction();
-      this.stats.color = "blue";
+      if (!this.invincible) {
+        this.stats.color = "blue";
+      }
 
       // State flags
       this.fastFalling = false;
@@ -171,6 +190,7 @@ class Player {
 
       if (this.position.x > RIGHT_BLAST_ZONE || this.position.x < LEFT_BLAST_ZONE || this.position.y > BOTTOM_BLAST_ZONE || this.position.y < TOP_BLAST_ZONE) {
         this.state = "dead";
+        this.stocks--;
       }
       break;
 
@@ -180,7 +200,9 @@ class Player {
       // State Behavior
       this.groundMovement();
       this.addFriction();
-      this.stats.color = "purple";
+      if (!this.invincible) {
+        this.stats.color = "purple";
+      }
 
       // State flags
       this.fastFalling = false;
@@ -200,6 +222,7 @@ class Player {
 
       if (this.position.x > RIGHT_BLAST_ZONE || this.position.x < LEFT_BLAST_ZONE || this.position.y > BOTTOM_BLAST_ZONE || this.position.y < TOP_BLAST_ZONE) {
         this.state = "dead";
+        this.stocks--;
       }
       break;
 
@@ -208,7 +231,7 @@ class Player {
 
       // State behavior
       this.airMovement();
-      if (!this.fastFalling) {
+      if (!this.fastFalling && !this.invincible) {
         this.stats.color = "pink";
       }
 
@@ -223,6 +246,7 @@ class Player {
 
       if (this.position.x > RIGHT_BLAST_ZONE || this.position.x < LEFT_BLAST_ZONE || this.position.y > BOTTOM_BLAST_ZONE || this.position.y < TOP_BLAST_ZONE) {
         this.state = "dead";
+        this.stocks--;
       }
       break;
 
@@ -240,6 +264,7 @@ class Player {
 
       if (this.position.x > RIGHT_BLAST_ZONE || this.position.x < LEFT_BLAST_ZONE || this.position.y > BOTTOM_BLAST_ZONE || this.position.y < TOP_BLAST_ZONE) {
         this.state = "dead";
+        this.stocks--;
       }
       break;
 
@@ -249,7 +274,9 @@ class Player {
       // State behaviour
       this.addFriction();
       this.landingLagTimer--;
-      this.stats.color = "red";
+      if (!this.invincible) {
+        this.stats.color = "red";
+      }
 
       // State triggers
       if (this.landingLagTimer <= 0) {
@@ -266,6 +293,7 @@ class Player {
 
       if (this.position.x > RIGHT_BLAST_ZONE || this.position.x < LEFT_BLAST_ZONE || this.position.y > BOTTOM_BLAST_ZONE || this.position.y < TOP_BLAST_ZONE) {
         this.state = "dead";
+        this.stocks--;
       }
       break;
 
@@ -274,6 +302,13 @@ class Player {
 
       // State behavior
       this.resetPlayer();
+      this.spawningTimer--;
+
+      // State trigger
+      if (this.spawningTimer <= 0) {
+        this.state = "spawning";
+      }
+
       break;
 
     // Spawning state behavior
@@ -283,10 +318,22 @@ class Player {
       this.angelPlatform();
 
       // State triggers
-      if (keyPressed()) {
+      if (keyIsDown(W_KEY) || keyIsDown(Q_KEY)) {
         this.state = "airborne";
+        this.doubleJump();
+        this.countInvincibility();
       }
 
+      if (keyIsDown(S_KEY)) {
+        this.state = "airborne";
+        this.fastFalling = true;
+        this.countInvincibility();
+      }
+
+      if (keyIsDown(A_KEY) || keyIsDown(D_KEY)) {
+        this.state = "airborne";
+        this.countInvincibility();
+      }
       break;
     }
 
@@ -331,7 +378,7 @@ class Player {
     if (this.velocity.y >= 0) {
       this.fastFalling = true;
 
-      if (this.fastFalling) {
+      if (this.fastFalling && !this.invincible) {
         this.stats.color = "green";
       }
     }
@@ -340,7 +387,9 @@ class Player {
   // Pause before the player jumps
   prepareGroundJump() {
     this.jumpSquatTimer--;
-    this.stats.color = "red";
+    if (!this.invincible) {
+      this.stats.color = "red";
+    }
     if (this.jumpSquatTimer <= 0) {
       this.jumpSquatting = false;
       this.groundJump();
@@ -352,17 +401,11 @@ class Player {
     if (this.jumpAvailable) {
 
       // Determine jump height
-      if (keyIsDown(W_KEY)) {
+      if (keyIsDown(Q_KEY)) {
+        this.velocity.y = this.stats.shortHopPower;
+      }
+      else if (keyIsDown(W_KEY)) {
         this.velocity.y = this.stats.fullHopPower;
-      }
-      else if (keyIsDown(Q_KEY) && keyIsDown(W_KEY)) {
-        this.velocity.y = this.stats.shortHopPower;
-      }
-      else if (keyIsDown(W_KEY) && keyIsDown(E_KEY)) {
-        this.velocity.y = this.stats.shortHopPower;
-      }
-      else if (keyIsDown(Q_KEY) && keyIsDown(E_KEY)) {
-        this.velocity.y = this.stats.shortHopPower;
       }
       else {
         this.velocity.y = this.stats.shortHopPower;
@@ -403,10 +446,6 @@ class Player {
   // Reset player if dead
   resetPlayer() {
 
-    // Reset player position
-    this.position.x = SPAWN_X;
-    this.position.y = SPAWN_Y;
-
     // Reset player states and flags
     this.percentage = 0;
     this.direction = true;
@@ -415,13 +454,23 @@ class Player {
     this.doubleJumpAvailable = true;
     this.fastFalling = false;
     this.invincible = true;
-    this.state = "spawning";
   }
 
   // Put player on the angel platform and prevent all damage until input
   angelPlatform() {
 
-    // 
+    // Reset player position
+    this.position.x = SPAWN_X;
+    this.position.y = SPAWN_Y;
+
+    // Halt all movement
+    this.acceleration.mult(0);
+    this.velocity.mult(0);
+
+    // Make player white to show invincibility
+    if (this.invincible) {
+      this.stats.color = "white";
+    }
   }
 }
 
@@ -448,14 +497,16 @@ function draw() {
   // Display player
   player.display();
 
-  console.log(player.direction);
+  // console.log(player.invincible);
+  // console.log(player.stats.color);
+  console.log(player.stocks);
 }
 
 // Handle player input
 function keyPressed() {
 
   // Jumping
-  if (keyCode === W_KEY || keyCode === Q_KEY || keyCode === E_KEY) {
+  if (keyCode === W_KEY || keyCode === Q_KEY) {
 
     // Ground jump
     if (player.jumpAvailable) {
