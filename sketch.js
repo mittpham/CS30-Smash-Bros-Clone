@@ -181,14 +181,14 @@ let marthForwardTilt = {
 // Down tilt
 let marthDownTilt = {
   offsetX: 60,
-  offsetY: -40,
+  offsetY: 20,
   width: 80,
-  height: 20,
+  height: 30,
   startingFrames: 7,
   activeFrames: 2,
   endingFrames: 15,
   damage: 10,
-  angle: 30,
+  angle: -30,
   knockback: 50,
   growthKnockback: 40,
   shieldStun: 10,
@@ -214,7 +214,7 @@ class Player {
     this.sounds = sounds;
 
     // States
-    this.state = "idle"; // idle, running, crouching, airborne, jumpsquat, landing, dead, spawning, attacking, hitstun
+    this.state = "idle"; // idle, running, crouching, airborne, jumpsquat, landing, dead, spawning, attacking, crouchAttacking hitstun
 
     // Flags/Conditions
     this.direction = true; // Right
@@ -696,6 +696,47 @@ class Player {
       
       break;
 
+    // crouchAttacking state behavior
+    case "crouchAttacking":
+
+      // State behavior
+      this.addFriction();
+
+      // Control the hitboxes
+      for (let i = this.hitboxes.length - 1; i >= 0; i--) {
+
+        let hitbox = this.hitboxes[i];
+
+        // Update the frame and position
+        hitbox.currentFrame++;
+        hitbox.update(this.position.x, this.position.y, this.direction);
+
+        // Remove hitboxes that have ended
+        if (hitbox.currentFrame > hitbox.totalFrames) {
+          this.hitboxes.splice(i, 1);
+          this.currentAttack = null;
+        }
+      }
+
+      // State triggers
+      if (this.hitboxes.length === 0) {
+        if (keyIsDown(this.controls.down)) {
+          this.state = "crouching";
+
+        }
+        else {
+          this.state = "idle";
+          this.stats.currentHeight = this.stats.idleHeight;
+          this.position.y -= this.stats.offsetCrouchHeight;
+        }
+      }
+
+      if (this.hitstunTimer > 0) {
+        this.state = "hitstun";
+      }
+      
+      break;
+
     // Dead state behavior
     case "dead":
 
@@ -869,6 +910,8 @@ class Player {
 
   // Create the new attack
   spawnHitbox(attack) {
+
+    // Make the players current attack a new instance
     this.currentAttack = new Attack(this.direction, this.position.x, this.position.y, attack.offsetX, 
       attack.offsetY, attack.width, attack.height, attack.damage, 
       attack.startingFrames, attack.activeFrames, attack.endingFrames, 
@@ -1165,7 +1208,7 @@ function setup() {
     jump: marthJump,
     doubleJump: marthDoubleJump,
     land: marthLand,
-    run: marthRun1,
+    run1: marthRun1,
     run2: marthRun2,
     run3: marthRun3,
     squat: marthSquat,
@@ -1247,13 +1290,24 @@ function keyPressed() {
     // Attacking
     if (keyCode === playerOne.controls.attack) {
 
-      // Make sure the player isn't currently attacking and grounded
+      // Attacks from idle state
       if (playerOne.state === "idle") {
+        if (keyIsDown(playerOne.controls.left) || keyIsDown(playerOne.controls.right)) {
+          playerOne.spawnHitbox(marthForwardTilt);
+        }
+        else {
+          playerOne.spawnHitbox(marthForwardTilt);
+        }
+      }
+
+      // Attacks from crouching state
+      else if (playerOne.state === "crouching") {
+        playerOne.state = "crouchAttacking";
         if (keyIsDown(playerOne.controls.down)) {
           playerOne.spawnHitbox(marthDownTilt);
         }
-        else if (keyIsDown(playerOne.controls.left) || keyIsDown(playerOne.controls.right)) {
-          playerOne.spawnHitbox(marthForwardTilt);
+        else {
+          playerOne.spawnHitbox(marthDownTilt);
         }
       }
     }
@@ -1296,9 +1350,25 @@ function keyPressed() {
     // Attacking
     if (keyCode === playerTwo.controls.attack) {
 
-      // Make sure the player isn't currently attacking and grounded
+      // Attacks from idle state
       if (playerTwo.state === "idle") {
-        playerTwo.spawnHitbox();
+        if (keyIsDown(playerTwo.controls.left) || keyIsDown(playerTwo.controls.right)) {
+          playerTwo.spawnHitbox(marthForwardTilt);
+        }
+        else {
+          playerTwo.spawnHitbox(marthForwardTilt);
+        }
+      }
+
+      // Attacks from crouching state
+      else if (playerTwo.state === "crouching") {
+        playerTwo.state = "crouchAttacking";
+        if (keyIsDown(playerTwo.controls.down)) {
+          playerTwo.spawnHitbox(marthDownTilt);
+        }
+        else {
+          playerTwo.spawnHitbox(marthDownTilt);
+        }
       }
     }
   }
