@@ -106,7 +106,9 @@ let stage;
 // Sounds
 let backgroundMusic;
 let marthAppear;
-let marthRun;
+let marthRun1;
+let marthRun2;
+let marthRun3;
 let marthSourHit;
 let marthSweetHit;
 let marthSwing;
@@ -159,6 +161,8 @@ let playerTwoMarthStats = {
 };
 
 // Marth attacks
+
+// Forward tilt
 let marthForwardTilt = {
   offsetX: 60,
   offsetY: 0,
@@ -172,6 +176,22 @@ let marthForwardTilt = {
   knockback: 55,
   growthKnockback: 85,
   shieldStun: 11,
+};
+
+// Down tilt
+let marthDownTilt = {
+  offsetX: 60,
+  offsetY: -40,
+  width: 80,
+  height: 20,
+  startingFrames: 7,
+  activeFrames: 2,
+  endingFrames: 15,
+  damage: 10,
+  angle: 30,
+  knockback: 50,
+  growthKnockback: 40,
+  shieldStun: 10,
 };
 
 // Create the base player
@@ -749,7 +769,7 @@ class Player {
       this.direction = true; // Right
 
       // Play sound
-      this.playSound("run");
+      this.playSound("run1");
     }
 
     // Move left
@@ -758,7 +778,7 @@ class Player {
       this.direction = false; // Left
 
       // Play sound
-      this.playSound("run");
+      this.playSound("run1");
     }
   }
 
@@ -848,11 +868,11 @@ class Player {
   }
 
   // Create the new attack
-  spawnHitbox() {
-    this.currentAttack = new Attack(this.direction, this.position.x, this.position.y, marthForwardTilt.offsetX, 
-      marthForwardTilt.offsetY, marthForwardTilt.width, marthForwardTilt.height, marthForwardTilt.damage, 
-      marthForwardTilt.startingFrames, marthForwardTilt.activeFrames, marthForwardTilt.endingFrames, 
-      marthForwardTilt.angle, marthForwardTilt.knockback, marthForwardTilt.growthKnockback);
+  spawnHitbox(attack) {
+    this.currentAttack = new Attack(this.direction, this.position.x, this.position.y, attack.offsetX, 
+      attack.offsetY, attack.width, attack.height, attack.damage, 
+      attack.startingFrames, attack.activeFrames, attack.endingFrames, 
+      attack.angle, attack.knockback, attack.growthKnockback);
 
     this.hitboxes.push(this.currentAttack);
     this.currentAttack.hasHit = false;
@@ -1104,7 +1124,9 @@ class Stage {
 function preload() {
   backgroundMusic = loadSound("assets/stage/backgroundmusic.mp3");
   marthAppear = loadSound("assets/marth/sounds/marthappear.mp3");
-  marthRun = loadSound("assets/marth/sounds/marthrun1.mp3");
+  marthRun1 = loadSound("assets/marth/sounds/marthrun1.mp3");
+  marthRun2 = loadSound("assets/marth/sounds/marthrun2.mp3");
+  marthRun3 = loadSound("assets/marth/sounds/marthrun3.mp3");
   marthSweetHit = loadSound("assets/marth/sounds/marthsweetspot.mp3");
   marthSwing = loadSound("assets/marth/sounds/marthswing.mp3");
   marthJump = loadSound("assets/marth/sounds/marthjump.mp3");
@@ -1128,7 +1150,9 @@ function setup() {
     jump: marthJump,
     doubleJump: marthDoubleJump,
     land: marthLand,
-    run: marthRun,
+    run1: marthRun1,
+    run2: marthRun2,
+    run3: marthRun3,
     squat: marthSquat,
     rise: marthRise,
     sweet: marthSweetHit,
@@ -1141,7 +1165,9 @@ function setup() {
     jump: marthJump,
     doubleJump: marthDoubleJump,
     land: marthLand,
-    run: marthRun,
+    run: marthRun1,
+    run2: marthRun2,
+    run3: marthRun3,
     squat: marthSquat,
     rise: marthRise,
     sweet: marthSweetHit,
@@ -1223,7 +1249,12 @@ function keyPressed() {
 
       // Make sure the player isn't currently attacking and grounded
       if (playerOne.state === "idle") {
-        playerOne.spawnHitbox();
+        if (keyIsDown(playerOne.controls.down)) {
+          playerOne.spawnHitbox(marthDownTilt);
+        }
+        else if (keyIsDown(playerOne.controls.left) || keyIsDown(playerOne.controls.right)) {
+          playerOne.spawnHitbox(marthForwardTilt);
+        }
       }
     }
   }
