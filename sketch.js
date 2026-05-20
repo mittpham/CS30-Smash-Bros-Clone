@@ -66,7 +66,8 @@ let playerOne;
 let playerOneControls = {
   left: 65, // A key
   right: 68, // D key
-  up: 87, // W key
+  jump: 87, // W key
+  up: 69, // E key
   down: 83, // S key
   shortHop: 81, // Q key
   attack: 85, // U key
@@ -84,7 +85,8 @@ let playerTwo;
 let playerTwoControls = {
   left: 37, // Left arrow
   right: 39, // Right arrow
-  up: 38, // Up arrow
+  jump: 38, // Up arrow
+  up: 16, // Shift key
   down: 40, // Down arrow
   shortHop: 36, // Home / Numberpad 7
   attack: 191, // Slash
@@ -162,12 +164,41 @@ let playerTwoMarthStats = {
 
 // Marth attacks
 
+// Jab
+let marthJabOne = {
+  offsetX: 60,
+  offsetY: -10,
+  width: 100,
+  height: 100,
+  startingFrames: 5,
+  activeFrames: 2,
+  endingFrames: 19,
+  damage: 5,
+  angle: 361,
+  knockback: 30,
+  growthKnockback: 12,
+};
+
+let marthJabTwo = {
+  offsetX: 60,
+  offsetY: -10,
+  width: 100,
+  height: 100,
+  startingFrames: 4,
+  activeFrames: 2,
+  endingFrames: 23,
+  damage: 6,
+  angle: 45,
+  knockback: 62,
+  growthKnockback: 75,
+};
+
 // Forward tilt
 let marthForwardTilt = {
   offsetX: 60,
-  offsetY: 0,
-  width: 80,
-  height: 90,
+  offsetY: -10,
+  width: 120,
+  height: 110,
   startingFrames: 8,
   activeFrames: 3,
   endingFrames: 22,
@@ -181,9 +212,9 @@ let marthForwardTilt = {
 // Down tilt
 let marthDownTilt = {
   offsetX: 60,
-  offsetY: 20,
-  width: 80,
-  height: 30,
+  offsetY: 10,
+  width: 100,
+  height: 40,
   startingFrames: 7,
   activeFrames: 2,
   endingFrames: 15,
@@ -192,6 +223,22 @@ let marthDownTilt = {
   knockback: 50,
   growthKnockback: 40,
   shieldStun: 10,
+};
+
+// Up tilt
+let marthUpTilt = {
+  offsetX: 0,
+  offsetY: -40,
+  width: 120,
+  height: 140,
+  startingFrames: 6,
+  activeFrames: 6,
+  endingFrames: 21,
+  damage: 10,
+  angle: -100,
+  knockback: 65,
+  growthKnockback: 100,
+  shieldStun: 9,
 };
 
 // Create the base player
@@ -214,7 +261,7 @@ class Player {
     this.sounds = sounds;
 
     // States
-    this.state = "idle"; // idle, running, crouching, airborne, jumpsquat, landing, dead, spawning, attacking, crouchAttacking hitstun
+    this.state = "idle"; // idle, running, crouching, airborne, jumpsquat, landing, dead, spawning, attacking, crouchAttacking, airAttacking, hitstun
 
     // Flags/Conditions
     this.direction = true; // Right
@@ -878,7 +925,7 @@ class Player {
       if (keyIsDown(this.controls.shortHop)) {
         this.velocity.y = this.stats.shortHopPower;
       }
-      else if (keyIsDown(this.controls.up)) {
+      else if (keyIsDown(this.controls.jump)) {
         this.velocity.y = this.stats.fullHopPower;
       }
       else {
@@ -909,7 +956,7 @@ class Player {
   }
 
   // Create the new attack
-  spawnHitbox(attack) {
+  spawnHitbox(attack, crouching, airborne) {
 
     // Make the players current attack a new instance
     this.currentAttack = new Attack(this.direction, this.position.x, this.position.y, attack.offsetX, 
@@ -919,7 +966,17 @@ class Player {
 
     this.hitboxes.push(this.currentAttack);
     this.currentAttack.hasHit = false;
-    this.state = "attacking";
+
+    // Change to proper attack state
+    if (crouching) {
+      this.state = "crouchAttacking";
+    }
+    else if (airborne) {
+      this.state = "airAttacking";
+    }
+    else {
+      this.state = "attacking";
+    }
     
     // Play sound
     this.playSound("swing");
@@ -1259,7 +1316,7 @@ function keyPressed() {
   if (playerOne.state !== "hitstun" && playerOne.state !== "dead") {
 
     // Jumping
-    if (keyCode === playerOne.controls.up || keyCode === playerOne.controls.shortHop) {
+    if (keyCode === playerOne.controls.jump || keyCode === playerOne.controls.shortHop) {
 
       // Angel platform jump
       if (playerOne.state === "spawning") {
@@ -1292,22 +1349,30 @@ function keyPressed() {
 
       // Attacks from idle state
       if (playerOne.state === "idle") {
+
+        // Attacking left and right
         if (keyIsDown(playerOne.controls.left) || keyIsDown(playerOne.controls.right)) {
-          playerOne.spawnHitbox(marthForwardTilt);
+          playerOne.spawnHitbox(marthForwardTilt, false, false);
         }
+
+        // Attacking up
+        else if (keyIsDown(playerOne.controls.up)) {
+          playerOne.spawnHitbox(marthUpTilt, false, false);
+        }
+
+        // Default attack
         else {
-          playerOne.spawnHitbox(marthForwardTilt);
+          playerOne.spawnHitbox(marthForwardTilt, false, false);
         }
       }
 
       // Attacks from crouching state
       else if (playerOne.state === "crouching") {
-        playerOne.state = "crouchAttacking";
         if (keyIsDown(playerOne.controls.down)) {
-          playerOne.spawnHitbox(marthDownTilt);
+          playerOne.spawnHitbox(marthDownTilt, true, false);
         }
         else {
-          playerOne.spawnHitbox(marthDownTilt);
+          playerOne.spawnHitbox(marthDownTilt, true, false);
         }
       }
     }
@@ -1319,7 +1384,7 @@ function keyPressed() {
   if (playerTwo.state !== "hitstun" && playerTwo.state !== "dead") {
 
     // Jumping
-    if (keyCode === playerTwo.controls.up || keyCode === playerTwo.controls.shortHop) {
+    if (keyCode === playerTwo.controls.jump || keyCode === playerTwo.controls.shortHop) {
 
       // Angel platform jump
       if (playerTwo.state === "spawning") {
@@ -1353,21 +1418,27 @@ function keyPressed() {
       // Attacks from idle state
       if (playerTwo.state === "idle") {
         if (keyIsDown(playerTwo.controls.left) || keyIsDown(playerTwo.controls.right)) {
-          playerTwo.spawnHitbox(marthForwardTilt);
+          playerTwo.spawnHitbox(marthForwardTilt, false, false);
         }
+
+        // Attacking up
+        else if (keyIsDown(playerTwo.controls.up)) {
+          playerTwo.spawnHitbox(marthUpTilt, false, false);
+        }
+
+        // Default attack
         else {
-          playerTwo.spawnHitbox(marthForwardTilt);
+          playerTwo.spawnHitbox(marthForwardTilt, false, false);
         }
       }
 
       // Attacks from crouching state
       else if (playerTwo.state === "crouching") {
-        playerTwo.state = "crouchAttacking";
         if (keyIsDown(playerTwo.controls.down)) {
-          playerTwo.spawnHitbox(marthDownTilt);
+          playerTwo.spawnHitbox(marthDownTilt, true, false);
         }
         else {
-          playerTwo.spawnHitbox(marthDownTilt);
+          playerTwo.spawnHitbox(marthDownTilt, true, false);
         }
       }
     }
