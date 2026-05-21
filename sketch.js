@@ -108,8 +108,14 @@ const RIGHT_BLAST_ZONE = 1465;
 
 let stage;
 
-// Game state variables
-let gameState = "playing"; // starting, playing, gameOver
+// Game state variables and constants
+let countdownTimer = 180;
+const THREE_SECOND_MARK = 120;
+const TWO_SECOND_MARK = 60;
+const ONE_SECOND_MARK = 0;
+const GO_MARK = -60;
+const COUNTDOWN_TEXT_SIZE = 100;
+let gameState = "starting"; // starting, playing, gameOver
 
 // Sounds
 let backgroundMusic;
@@ -1244,7 +1250,8 @@ class Stage {
 
 // Load sounds and sprites
 function preload() {
-  backgroundMusic = loadSound("assets/stage/backgroundmusic.mp3");
+  backgroundMusic = loadSound("assets/stage/sounds/backgroundmusic.mp3");
+  countdownAnnouncer = loadSound("assets/stage/sounds/countdown.mp3");
   marthAppear = loadSound("assets/marth/sounds/marthappear.mp3");
   marthRun1 = loadSound("assets/marth/sounds/marthrun1.mp3");
   marthRun2 = loadSound("assets/marth/sounds/marthrun2.mp3");
@@ -1310,15 +1317,17 @@ function setup() {
 
 // Manage players
 function draw() {
+  background(0);
 
   // starting state
   if (gameState === "starting") {
+
+    // Show countdown
     countDown();
   }
 
   // playing state
   else if (gameState === "playing") {
-    background(0);
     noStroke();
   
     // Draw stage
@@ -1497,7 +1506,77 @@ function keyPressed() {
 
 // Start the countdown before the game starts
 function countDown() {
+
+  // Define style
+  fill("white");
+  stroke("black");
+  rectMode(CENTER);
+  textAlign(CENTER, CENTER);
+  textSize(COUNTDOWN_TEXT_SIZE);
+
+  // Start countdown
+  countdownTimer--;
+
+  // Play sound
+  if (!countdownAnnouncer.isPlaying()) {
+    countdownAnnouncer.play();
+  }
+
+  // Show correct number
+  if (countdownTimer > THREE_SECOND_MARK) {
+    text("3", width / 2, height / 2);
+
+    // Draw stage
+    stage.update();
+    stage.display();
+
+    // Display player
+    playerOne.display();
+    playerTwo.display();
+  }
+  else if (countdownTimer > TWO_SECOND_MARK) {
+    text("2", width / 2, height / 2);
+
+    // Draw stage
+    stage.update();
+    stage.display();
+
+    // Display player
+    playerOne.display();
+    playerTwo.display();
+  }
+  else if (countdownTimer > ONE_SECOND_MARK) {
+    text("1", width / 2, height / 2);
+
+    // Draw stage
+    stage.update();
+    stage.display();
+
+    // Display player
+    playerOne.display();
+    playerTwo.display();
+  }
+  else if (countdownTimer > GO_MARK) {
+    text("GO!", width / 2, height / 2);
+    gameState = "playing";
+
+    noStroke();
   
+    // Draw stage
+    stage.update();
+    stage.display();
+  
+    // Update player states and movement
+    playerOne.update(playerTwo);
+    playerTwo.update(playerOne);  
+  
+    // Check for collision between players and attacks
+    playerCollisions(playerOne, playerTwo);
+  
+    // Display player
+    playerOne.display();
+    playerTwo.display();
+  }
 }
 
 // Check if the players are colliding and prevent them from overlapping
