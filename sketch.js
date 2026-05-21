@@ -53,6 +53,9 @@ const LOW_KNOCKBACK_ANGLE = 0;
 const HIGH_KNOCKBACK_ANGLE = -38;
 const LOW_KNOCKBACK_THRESHOLD = 66;
 const HIGH_KNOCKBACK_THRESHOLD = 88;
+const R_KEY = 82;
+
+let winner = null;
 
 // Player 1 constants and variables
 const PLAYER_ONE_START_X = 520;
@@ -104,6 +107,9 @@ const LEFT_BLAST_ZONE = -25;
 const RIGHT_BLAST_ZONE = 1465;
 
 let stage;
+
+// Game state variables
+let gameState = "playing"; // starting, playing, gameOver
 
 // Sounds
 let backgroundMusic;
@@ -835,6 +841,12 @@ class Player {
       // State triggers
       if (this.hitstunTimer <= 0) {
 
+        // Reset the height of the character if they are hit while crouching
+        if (this.stats.currentHeight !== this.stats.idleHeight) {
+          this.stats.currentHeight = this.stats.idleHeight;
+          this.position.y -= this.stats.offsetCrouchHeight;
+        }
+
         // Change to airborne or idle depending on the position
         if (!this.touchingTop) {
           this.state = "airborne";
@@ -1218,6 +1230,16 @@ class Stage {
   update() {
     // Nice to have stuff
   }
+
+  // Show how many lives each player has
+  displayStocks() {
+
+  }
+
+  // Show how much percent each player has
+  displayPercent() {
+
+  }
 }
 
 // Load sounds and sprites
@@ -1288,161 +1310,194 @@ function setup() {
 
 // Manage players
 function draw() {
-  background(0);
-  noStroke();
 
-  // Draw stage
-  stage.update();
-  stage.display();
+  // starting state
+  if (gameState === "starting") {
+    countDown();
+  }
 
-  // Update player states and movement
-  playerOne.update(playerTwo);
-  playerTwo.update(playerOne);  
+  // playing state
+  else if (gameState === "playing") {
+    background(0);
+    noStroke();
+  
+    // Draw stage
+    stage.update();
+    stage.display();
+  
+    // Update player states and movement
+    playerOne.update(playerTwo);
+    playerTwo.update(playerOne);  
+  
+    // Check for collision between players and attacks
+    playerCollisions(playerOne, playerTwo);
+  
+    // Display player
+    playerOne.display();
+    playerTwo.display();
+  
+    // Check stocks for winner
+    gameEnd(playerOne.stocks, playerTwo.stocks);
+  }
 
-  // Check for collision between players and attacks
-  playerCollisions(playerOne, playerTwo);
-
-  // Display player
-  playerOne.display();
-  playerTwo.display();
+  // gameOver state
+  else if (gameState === "gameOver") {
+    displayWinner(winner);
+  }
 }
 
 // Handle player input for single events
 function keyPressed() {
 
-  // PLAYER ONE CONTROLS
+  // Events while playing
+  if (gameState === "playing") {
 
-  // make sure the player isn't stuck in hitstun or dead
-  if (playerOne.state !== "hitstun" && playerOne.state !== "dead") {
-
-    // Jumping
-    if (keyCode === playerOne.controls.jump || keyCode === playerOne.controls.shortHop) {
-
-      // Angel platform jump
-      if (playerOne.state === "spawning") {
-        playerOne.state = "airborne";
-        playerOne.doubleJump();
+    // PLAYER ONE CONTROLS
+  
+    // make sure the player isn't stuck in hitstun or dead
+    if (playerOne.state !== "hitstun" && playerOne.state !== "dead") {
+  
+      // Jumping
+      if (keyCode === playerOne.controls.jump || keyCode === playerOne.controls.shortHop) {
+  
+        // Angel platform jump
+        if (playerOne.state === "spawning") {
+          playerOne.state = "airborne";
+          playerOne.doubleJump();
+        }
+  
+        // Ground jump
+        else if (playerOne.jumpAvailable) {
+          playerOne.jumpSquatting = true;
+        }
+  
+        // Double jump
+        else if (playerOne.doubleJumpAvailable) {
+          playerOne.doubleJump();
+        }
       }
-
-      // Ground jump
-      else if (playerOne.jumpAvailable) {
-        playerOne.jumpSquatting = true;
+  
+      // Fast falling
+      if (keyCode === playerOne.controls.down) {
+  
+        // Check that player is airborne
+        if (playerOne.state === "airborne") {
+          playerOne.fastFall();
+        }
       }
-
-      // Double jump
-      else if (playerOne.doubleJumpAvailable) {
-        playerOne.doubleJump();
+  
+      // Attacking
+      if (keyCode === playerOne.controls.attack) {
+  
+        // Attacks from idle state
+        if (playerOne.state === "idle") {
+  
+          // Attacking left and right
+          if (keyIsDown(playerOne.controls.left) || keyIsDown(playerOne.controls.right)) {
+            playerOne.spawnHitbox(marthForwardTilt, false, false);
+          }
+  
+          // Attacking up
+          else if (keyIsDown(playerOne.controls.up)) {
+            playerOne.spawnHitbox(marthUpTilt, false, false);
+          }
+  
+          // Default attack
+          else {
+            playerOne.spawnHitbox(marthForwardTilt, false, false);
+          }
+        }
+  
+        // Attacks from crouching state
+        else if (playerOne.state === "crouching") {
+          if (keyIsDown(playerOne.controls.down)) {
+            playerOne.spawnHitbox(marthDownTilt, true, false);
+          }
+          else {
+            playerOne.spawnHitbox(marthDownTilt, true, false);
+          }
+        }
       }
     }
-
-    // Fast falling
-    if (keyCode === playerOne.controls.down) {
-
-      // Check that player is airborne
-      if (playerOne.state === "airborne") {
-        playerOne.fastFall();
-      }
-    }
-
-    // Attacking
-    if (keyCode === playerOne.controls.attack) {
-
-      // Attacks from idle state
-      if (playerOne.state === "idle") {
-
-        // Attacking left and right
-        if (keyIsDown(playerOne.controls.left) || keyIsDown(playerOne.controls.right)) {
-          playerOne.spawnHitbox(marthForwardTilt, false, false);
+  
+    // PLAYER TWO CONTROLS
+  
+    // make sure the player isn't stuck in hitstun or dead
+    if (playerTwo.state !== "hitstun" && playerTwo.state !== "dead") {
+  
+      // Jumping
+      if (keyCode === playerTwo.controls.jump || keyCode === playerTwo.controls.shortHop) {
+  
+        // Angel platform jump
+        if (playerTwo.state === "spawning") {
+          playerTwo.state = "airborne";
+          playerTwo.doubleJump();
         }
-
-        // Attacking up
-        else if (keyIsDown(playerOne.controls.up)) {
-          playerOne.spawnHitbox(marthUpTilt, false, false);
+  
+        // Ground jump
+        else if (playerTwo.jumpAvailable) {
+          playerTwo.jumpSquatting = true;
         }
-
-        // Default attack
-        else {
-          playerOne.spawnHitbox(marthForwardTilt, false, false);
+  
+        // Double jump
+        else if (playerTwo.doubleJumpAvailable) {
+          playerTwo.doubleJump();
         }
       }
-
-      // Attacks from crouching state
-      else if (playerOne.state === "crouching") {
-        if (keyIsDown(playerOne.controls.down)) {
-          playerOne.spawnHitbox(marthDownTilt, true, false);
+  
+      // Fast falling
+      if (keyCode === playerTwo.controls.down) {
+  
+        // Check that player is airborne
+        if (playerTwo.state === "airborne") {
+          playerTwo.fastFall();
         }
-        else {
-          playerOne.spawnHitbox(marthDownTilt, true, false);
+      }
+  
+      // Attacking
+      if (keyCode === playerTwo.controls.attack) {
+  
+        // Attacks from idle state
+        if (playerTwo.state === "idle") {
+          if (keyIsDown(playerTwo.controls.left) || keyIsDown(playerTwo.controls.right)) {
+            playerTwo.spawnHitbox(marthForwardTilt, false, false);
+          }
+  
+          // Attacking up
+          else if (keyIsDown(playerTwo.controls.up)) {
+            playerTwo.spawnHitbox(marthUpTilt, false, false);
+          }
+  
+          // Default attack
+          else {
+            playerTwo.spawnHitbox(marthForwardTilt, false, false);
+          }
+        }
+  
+        // Attacks from crouching state
+        else if (playerTwo.state === "crouching") {
+          if (keyIsDown(playerTwo.controls.down)) {
+            playerTwo.spawnHitbox(marthDownTilt, true, false);
+          }
+          else {
+            playerTwo.spawnHitbox(marthDownTilt, true, false);
+          }
         }
       }
     }
   }
 
-  // PLAYER TWO CONTROLS
-
-  // make sure the player isn't stuck in hitstun or dead
-  if (playerTwo.state !== "hitstun" && playerTwo.state !== "dead") {
-
-    // Jumping
-    if (keyCode === playerTwo.controls.jump || keyCode === playerTwo.controls.shortHop) {
-
-      // Angel platform jump
-      if (playerTwo.state === "spawning") {
-        playerTwo.state = "airborne";
-        playerTwo.doubleJump();
-      }
-
-      // Ground jump
-      else if (playerTwo.jumpAvailable) {
-        playerTwo.jumpSquatting = true;
-      }
-
-      // Double jump
-      else if (playerTwo.doubleJumpAvailable) {
-        playerTwo.doubleJump();
-      }
-    }
-
-    // Fast falling
-    if (keyCode === playerTwo.controls.down) {
-
-      // Check that player is airborne
-      if (playerTwo.state === "airborne") {
-        playerTwo.fastFall();
-      }
-    }
-
-    // Attacking
-    if (keyCode === playerTwo.controls.attack) {
-
-      // Attacks from idle state
-      if (playerTwo.state === "idle") {
-        if (keyIsDown(playerTwo.controls.left) || keyIsDown(playerTwo.controls.right)) {
-          playerTwo.spawnHitbox(marthForwardTilt, false, false);
-        }
-
-        // Attacking up
-        else if (keyIsDown(playerTwo.controls.up)) {
-          playerTwo.spawnHitbox(marthUpTilt, false, false);
-        }
-
-        // Default attack
-        else {
-          playerTwo.spawnHitbox(marthForwardTilt, false, false);
-        }
-      }
-
-      // Attacks from crouching state
-      else if (playerTwo.state === "crouching") {
-        if (keyIsDown(playerTwo.controls.down)) {
-          playerTwo.spawnHitbox(marthDownTilt, true, false);
-        }
-        else {
-          playerTwo.spawnHitbox(marthDownTilt, true, false);
-        }
-      }
+  // Events while game over
+  if (gameState === "gameOver") {
+    if (keyCode === R_KEY) {
+      gameState = "playing";
     }
   }
+}
+
+// Start the countdown before the game starts
+function countDown() {
+  
 }
 
 // Check if the players are colliding and prevent them from overlapping
@@ -1483,3 +1538,18 @@ function playerCollisions(playerOne, playerTwo) {
     }
   }
 }
+
+// End game if either player wins
+function gameEnd(playerOneStocks, playerTwoStocks) {
+  if (playerOneStocks === 0) {
+    winner = playerTwo;
+  }
+  if (playerTwoStocks === 0) {
+    winner = playerOne;
+  }
+}
+
+// Show the winner
+function displayWinner(winner) {
+
+};
