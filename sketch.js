@@ -26,13 +26,15 @@
 // https://www.101soundboards.com/boards/1048309-marth-super-smash-bros-ultimate - marth sounds
 // https://www.deviantart.com/the-screen-ko-plus/art/SSBC-Marth-Sprite-Sheet-Reupload-1125121853 - marth sprites
 // https://www.youtube.com/watch?v=6JYnDGh5mCE&list=PLYzPRovwO_fOl0WuwqizjhPLbIwnks8Lg&index=6 - music
+// https://www.myinstants.com/en/instant/3-2-1-go-87996/?utm_source=copy&utm_medium=share - announcer countdown
+// https://www.youtube.com/watch?v=7HzxdnW2gaI - marth win sound
+// https://www.youtube.com/watch?v=14dHroamo2E - final ko sound
 
 // Things to do:
 // 1. fix moving after hitstun
-// 2. add sounds
-// 3. create a game over
-// 4. Adjust marths stats
-// 5. Fix the ratio for stage - 1 meter in game is about 16 pixels
+// 2. add sounds kill sound win sound
+// 3. Adjust marths stats
+// 4. Fix the ratio for stage - 1 meter in game is about 16 pixels
 
 // Canvas constants
 const SCREEN_WIDTH = 1440;
@@ -109,16 +111,19 @@ const RIGHT_BLAST_ZONE = 1465;
 let stage;
 
 // Game state variables and constants
-let countdownTimer = 180;
 const THREE_SECOND_MARK = 120;
 const TWO_SECOND_MARK = 60;
 const ONE_SECOND_MARK = 0;
 const GO_MARK = -60;
 const COUNTDOWN_TEXT_SIZE = 100;
+
+let countdownTimer = 180;
+let countdownBegun = false;
 let gameState = "starting"; // starting, playing, gameOver
 
 // Sounds
 let backgroundMusic;
+let countdownAnnouncer;
 let marthAppear;
 let marthRun1;
 let marthRun2;
@@ -1359,7 +1364,7 @@ function draw() {
 function keyPressed() {
 
   // Events while playing
-  if (gameState === "playing") {
+  if (gameState === "playing" || gameState === "starting" && countdownTimer < ONE_SECOND_MARK) {
 
     // PLAYER ONE CONTROLS
   
@@ -1498,8 +1503,31 @@ function keyPressed() {
 
   // Events while game over
   if (gameState === "gameOver") {
+
+    // Restart game
     if (keyCode === R_KEY) {
-      gameState = "playing";
+
+      // Reset game state and countdown
+      gameState = "starting";
+      countdownBegun = false;
+      countdownTimer = 180;
+
+      // Reset players
+      playerOne.resetPlayer();
+      playerTwo.resetPlayer();
+      playerOne.state = "idle";
+      playerTwo.state = "idle";
+      playerOne.position.set(PLAYER_ONE_START_X, PLAYER_ONE_START_Y - playerOneMarthStats.currentHeight / 2);
+      playerTwo.position.set(PLAYER_TWO_START_X, PLAYER_TWO_START_Y - playerTwoMarthStats.currentHeight / 2);
+      playerOne.velocity.set(0, 0);
+      playerTwo.velocity.set(0, 0);
+      playerOne.hitboxes = [];
+      playerTwo.hitboxes = [];
+      playerOne.currentAttack = null;
+      playerTwo.currentAttack = null;
+      playerOne.stocks = PLAYER_STOCKS;
+      playerTwo.stocks = PLAYER_STOCKS;
+      winner = null;
     }
   }
 }
@@ -1518,8 +1546,9 @@ function countDown() {
   countdownTimer--;
 
   // Play sound
-  if (!countdownAnnouncer.isPlaying()) {
+  if (!countdownBegun) {
     countdownAnnouncer.play();
+    countdownBegun = true;
   }
 
   // Show correct number
@@ -1558,7 +1587,6 @@ function countDown() {
   }
   else if (countdownTimer > GO_MARK) {
     text("GO!", width / 2, height / 2);
-    gameState = "playing";
 
     noStroke();
   
@@ -1576,6 +1604,10 @@ function countDown() {
     // Display player
     playerOne.display();
     playerTwo.display();
+  }
+  else {
+    countdownAnnouncer.stop();
+    gameState = "playing";
   }
 }
 
@@ -1622,13 +1654,28 @@ function playerCollisions(playerOne, playerTwo) {
 function gameEnd(playerOneStocks, playerTwoStocks) {
   if (playerOneStocks === 0) {
     winner = playerTwo;
+    gameState = "gameOver";
   }
   if (playerTwoStocks === 0) {
     winner = playerOne;
+    gameState = "gameOver";
   }
 }
 
 // Show the winner
 function displayWinner(winner) {
-
+  background(0);
+  fill("white");
+  stroke("black");
+  rectMode(CENTER);
+  textAlign(CENTER, CENTER);
+  textSize(COUNTDOWN_TEXT_SIZE);
+  if (winner === playerOne) {
+    text(`Player 1 wins!
+    Press R to play again`, width / 2, height / 2);
+  }
+  else if (winner === playerTwo) {
+    text(`Player 2 wins!
+    Press R to play again`, width / 2, height / 2);
+  }
 };
