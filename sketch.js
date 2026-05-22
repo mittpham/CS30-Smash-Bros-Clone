@@ -56,6 +56,7 @@ const HIGH_KNOCKBACK_ANGLE = -38;
 const LOW_KNOCKBACK_THRESHOLD = 66;
 const HIGH_KNOCKBACK_THRESHOLD = 88;
 const R_KEY = 82;
+const PLAYER_TEXT_SIZE = 20;
 
 let winner = null;
 
@@ -116,6 +117,8 @@ const TWO_SECOND_MARK = 60;
 const ONE_SECOND_MARK = 0;
 const GO_MARK = -60;
 const COUNTDOWN_TEXT_SIZE = 100;
+const DAMAGE_METER_TEXT_SIZE = 40;
+const DAMAGE_METER_Y = 730;
 
 let countdownTimer = 180;
 let countdownBegun = false;
@@ -156,6 +159,7 @@ let playerOneMarthStats = {
   idleHeight: 80,
   crouchHeight: 40,
   offsetCrouchHeight: 20,
+  name: "P1",
 };
 
 let playerTwoMarthStats = {
@@ -177,6 +181,7 @@ let playerTwoMarthStats = {
   idleHeight: 80,
   crouchHeight: 40,
   offsetCrouchHeight: 20,
+  name: "P2",
 };
 
 // Marth attacks
@@ -312,6 +317,14 @@ class Player {
     noStroke();
     fill(this.stats.color);
     rect(this.position.x, this.position.y, this.stats.width, this.stats.currentHeight);
+
+    // Marker to show player
+    fill("white");
+    stroke("black");
+    rectMode(CENTER);
+    textAlign(CENTER, CENTER);
+    textSize(PLAYER_TEXT_SIZE);
+    text(this.stats.name, this.position.x, this.position.y - 3 * this.stats.idleHeight / 4);
 
     // Draw hitboxes
     for (let hitbox of this.hitboxes) {
@@ -1231,10 +1244,13 @@ class Stage {
   }
 
   // Show the stage
-  display() {
+  display(playerOne, playerTwo) {
     rectMode(CORNER);
     fill("white");
     rect(this.x, this.y, this.w, this.h);
+
+    // Show the players percent
+    this.displayDamageMeter(playerOne, playerTwo);
   }
 
   // Go through animation frames
@@ -1243,13 +1259,26 @@ class Stage {
   }
 
   // Show how many lives each player has
-  displayStocks() {
+  displayDamageMeter(playerOne, playerTwo) {
 
-  }
+    // Define the style
+    fill("white");
+    stroke("black");
+    rectMode(CENTER);
+    textAlign(CENTER, CENTER);
+    textSize(DAMAGE_METER_TEXT_SIZE);
 
-  // Show how much percent each player has
-  displayPercent() {
+    // Show the percent
+    let playerOnePercent = str(playerOne.percentage);
+    let playerTwoPercent = str(playerTwo.percentage);
 
+    text(playerOnePercent, PLAYER_ONE_START_X, DAMAGE_METER_Y);
+    text(playerTwoPercent, PLAYER_TWO_START_X, DAMAGE_METER_Y);
+
+    // Show the stocks
+    for (let i = 0; i < playerOne.stocks; i++) {
+      
+    }
   }
 }
 
@@ -1337,7 +1366,7 @@ function draw() {
   
     // Draw stage
     stage.update();
-    stage.display();
+    stage.display(playerOne, playerTwo);
   
     // Update player states and movement
     playerOne.update(playerTwo);
