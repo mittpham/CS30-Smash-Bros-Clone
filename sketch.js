@@ -307,7 +307,7 @@ let marthForwardAir = {
   growthKnockback: 80,
   shieldStun: 5,
   endingLag: 10,
-  autoCancelStart: null,
+  autoCancelStart: 0,
   autoCancelEnd: 36,
 };
 
@@ -521,8 +521,10 @@ class Player {
   // Use player 2 as the hurtbox to check if any attack's hitbox collides with them
   checkAttackCollision(hurtbox) {
 
-    // Make sure that there is an attack out currently
-    if (this.currentAttack !== null) {
+    // Make sure that there is an attack out currently and that the attack is in its active frames
+    if (this.currentAttack !== null && 
+      this.currentAttack.currentFrame > this.currentAttack.startingFrames && 
+      this.currentAttack.currentFrame <= this.currentAttack.startingFrames + this.currentAttack.activeFrames) {
 
       // Player's hitbox's edges
       let hitboxBottom = this.currentAttack.y + this.currentAttack.h / 2;
@@ -866,38 +868,69 @@ class Player {
     case "airAttacking":
 
       // State behavior
-      this.airMovement();
+      let currentFrame = this.currentAttack.currentFrame;
+      let autoCancelStartingWindow = this.currentAttack.autoCancelStart;
+      let autoCancelEndingWindow = this.currentAttack.autoCancelEnd;
+      let endingLag = this.currentAttack.endingLag;
 
+      this.airMovement();
+      
+      console.log(playerOne.currentAttack.currentFrame);
+      
       // Control the hitboxes
       for (let i = this.hitboxes.length - 1; i >= 0; i--) {
-
+        
         let hitbox = this.hitboxes[i];
-
+        
         // Update the frame and position
         hitbox.currentFrame++;
         hitbox.update(this.position.x, this.position.y, this.direction);
-
+        
         // Remove hitboxes that have ended
         if (hitbox.currentFrame > hitbox.totalFrames) {
           this.hitboxes.splice(i, 1);
           this.currentAttack = null;
         }
       }
-
+      
       // State triggers
-      if (this.hitboxes.length === 0) {
-        if (this.touchingTop) {
-          
+      
+      // If the opponent lands while air attacking
+      if (this.touchingTop) {
+        this.state = "landing";
+        
+        // Reset velocity and snap to stage
+        this.velocity.y = 0;
+        this.position.y = STAGE_Y - this.stats.currentHeight / 2;
+
+        console.log("endingLag", this.currentAttack.endingLag);
+
+        // Remove the attack
+        this.hitboxes = [];
+        this.currentAttack = null;
+
+        // Determine the endlag based on the current frame
+        if (currentFrame > autoCancelEndingWindow) {
+          this.landingLagTimer = HARD_LANDING_LAG_TIMER;
+        }
+        else if (currentFrame < autoCancelStartingWindow) {
+          this.landingLagTimer = HARD_LANDING_LAG_TIMER;
         }
         else {
-
+          this.landingLagTimer = endingLag;
         }
       }
 
+      // If the opponent finishes the attack in the air
+      else if (this.hitboxes.length === 0) {
+        this.state = "airborne";
+
+      }
+      
       if (this.hitstunTimer > 0) {
         this.state = "hitstun";
       }
-      
+
       break;
 
     // Dead state behavior
@@ -1592,8 +1625,11 @@ function keyPressed() {
         }
 
         // Attacks from airborne state
-        if (playerOne.state === "airborne") {
+        else if (playerOne.state === "airborne") {
           if (keyIsDown(playerOne.controls.left) || keyIsDown(playerOne.controls.right)) {
+            playerOne.spawnAirHitbox(marthForwardAir);
+          }
+          else {
             playerOne.spawnAirHitbox(marthForwardAir);
           }
         }
@@ -1665,9 +1701,12 @@ function keyPressed() {
         }
 
         // Attacks from airborne state
-        if (playerTwo.state === "airborne") {
+        else if (playerTwo.state === "airborne") {
           if (keyIsDown(playerTwo.controls.left) || keyIsDown(playerTwo.controls.right)) {
-            playerOne.spawnAirHitbox(marthForwardAir);
+            playerTwo.spawnAirHitbox(marthForwardAir);
+          }
+          else {
+            playerTwo.spawnAirHitbox(marthForwardAir);
           }
         }
       }
