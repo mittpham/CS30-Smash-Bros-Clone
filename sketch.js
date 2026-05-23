@@ -27,14 +27,19 @@
 // https://www.deviantart.com/the-screen-ko-plus/art/SSBC-Marth-Sprite-Sheet-Reupload-1125121853 - marth sprites
 // https://www.youtube.com/watch?v=6JYnDGh5mCE&list=PLYzPRovwO_fOl0WuwqizjhPLbIwnks8Lg&index=6 - music
 // https://www.myinstants.com/en/instant/3-2-1-go-87996/?utm_source=copy&utm_medium=share - announcer countdown
+// https://www.youtube.com/watch?v=FIV4jXtg6-s&list=RDFIV4jXtg6-s&start_radio=1 - game end sound
 // https://www.youtube.com/watch?v=7HzxdnW2gaI - marth win sound
 // https://www.youtube.com/watch?v=14dHroamo2E - final ko sound
+// https://www.myinstants.com/en/instant/stage-fallout-super-smash-bros-ultimate-16980/ - regular death sound
+
+// https://sounds.spriters-resource.com/wii_u/supersmashbrosforwiiu/asset/397960/ - more marth sounds
 
 // Things to do:
 // 1. fix moving after hitstun
-// 2. add sounds kill sound win sound
-// 3. Adjust marths stats
-// 4. Fix the ratio for stage - 1 meter in game is about 16 pixels
+// 2. add sounds kill sound, marth voice
+// 3. display stocks
+// 4. Adjust marths stats
+// 5. Fix the ratio for stage - 1 meter in game is about 16 pixels
 
 // Canvas constants
 const SCREEN_WIDTH = 1440;
@@ -119,25 +124,49 @@ const GO_MARK = -60;
 const COUNTDOWN_TEXT_SIZE = 100;
 const DAMAGE_METER_TEXT_SIZE = 40;
 const DAMAGE_METER_Y = 730;
+const PLAYER_NAME_TEXT_SIZE = 20;
+const DAMAGE_METER_GAP = 30;
 
 let countdownTimer = 180;
 let countdownBegun = false;
+let marthWinDone = false;
 let gameState = "starting"; // starting, playing, gameOver
 
 // Sounds
 let backgroundMusic;
 let countdownAnnouncer;
-let marthAppear;
-let marthRun1;
-let marthRun2;
-let marthRun3;
-let marthSourHit;
-let marthSweetHit;
-let marthSwing;
-let marthJump;
-let marthLand;
-let marthHurt;
-let marthSquat;
+let marthWin;
+let gameEndMusic;
+
+// Player one
+let marthAppearOne;
+let marthRun1One;
+let marthRun2One;
+let marthRun3One;
+let marthSourHitOne;
+let marthSweetHitOne;
+let marthSwingOne;
+let marthJumpOne;
+let marthDoubleJumpOne;
+let marthLandOne;
+let marthHurtOne;
+let marthSquatOne;
+let marthRiseOne;
+
+// Player two
+let marthAppearTwo;
+let marthRun1Two;
+let marthRun2Two;
+let marthRun3Two;
+let marthSourHitTwo;
+let marthSweetHitTwo;
+let marthSwingTwo;
+let marthJumpTwo;
+let marthDoubleJumpTwo;
+let marthLandTwo;
+let marthHurtTwo;
+let marthSquatTwo;
+let marthRiseTwo;
 
 // Marth stats
 let playerOneMarthStats = {
@@ -219,7 +248,7 @@ let marthJabTwo = {
 let marthForwardTilt = {
   offsetX: 60,
   offsetY: -10,
-  width: 120,
+  width: 100,
   height: 110,
   startingFrames: 8,
   activeFrames: 3,
@@ -235,7 +264,7 @@ let marthForwardTilt = {
 let marthDownTilt = {
   offsetX: 60,
   offsetY: 10,
-  width: 100,
+  width: 120,
   height: 40,
   startingFrames: 7,
   activeFrames: 2,
@@ -261,6 +290,25 @@ let marthUpTilt = {
   knockback: 65,
   growthKnockback: 100,
   shieldStun: 9,
+};
+
+// Forward air
+let marthForwardAir = {
+  offsetX: 60,
+  offsetY: 0,
+  width: 100,
+  height: 120,
+  startingFrames: 6,
+  activeFrames: 2,
+  endingFrames: 29,
+  damage: 11.5,
+  angle: 361,
+  knockback: 40,
+  growthKnockback: 80,
+  shieldStun: 5,
+  endingLag: 10,
+  autoCancelStart: null,
+  autoCancelEnd: 36,
 };
 
 // Create the base player
@@ -814,6 +862,44 @@ class Player {
       
       break;
 
+    // airAttacking state behavior
+    case "airAttacking":
+
+      // State behavior
+      this.airMovement();
+
+      // Control the hitboxes
+      for (let i = this.hitboxes.length - 1; i >= 0; i--) {
+
+        let hitbox = this.hitboxes[i];
+
+        // Update the frame and position
+        hitbox.currentFrame++;
+        hitbox.update(this.position.x, this.position.y, this.direction);
+
+        // Remove hitboxes that have ended
+        if (hitbox.currentFrame > hitbox.totalFrames) {
+          this.hitboxes.splice(i, 1);
+          this.currentAttack = null;
+        }
+      }
+
+      // State triggers
+      if (this.hitboxes.length === 0) {
+        if (this.touchingTop) {
+          
+        }
+        else {
+
+        }
+      }
+
+      if (this.hitstunTimer > 0) {
+        this.state = "hitstun";
+      }
+      
+      break;
+
     // Dead state behavior
     case "dead":
 
@@ -991,14 +1077,14 @@ class Player {
     }
   }
 
-  // Create the new attack
-  spawnHitbox(attack, crouching, airborne) {
+  // Create new ground attack
+  spawnGroundHitbox(attack, crouching) {
 
     // Make the players current attack a new instance
     this.currentAttack = new Attack(this.direction, this.position.x, this.position.y, attack.offsetX, 
       attack.offsetY, attack.width, attack.height, attack.damage, 
       attack.startingFrames, attack.activeFrames, attack.endingFrames, 
-      attack.angle, attack.knockback, attack.growthKnockback);
+      attack.angle, attack.knockback, attack.growthKnockback, attack.shieldStun);
 
     this.hitboxes.push(this.currentAttack);
     this.currentAttack.hasHit = false;
@@ -1007,12 +1093,28 @@ class Player {
     if (crouching) {
       this.state = "crouchAttacking";
     }
-    else if (airborne) {
-      this.state = "airAttacking";
-    }
     else {
       this.state = "attacking";
     }
+    
+    // Play sound
+    this.playSound("swing");
+  }
+
+  spawnAirHitbox(attack) {
+
+    // Make the players current attack a new instance
+    this.currentAttack = new Attack(this.direction, this.position.x, this.position.y, attack.offsetX, 
+      attack.offsetY, attack.width, attack.height, attack.damage, 
+      attack.startingFrames, attack.activeFrames, attack.endingFrames, 
+      attack.angle, attack.knockback, attack.growthKnockback, attack.shieldStun, 
+      attack.endingLag, attack.autoCancelStart, attack.autoCancelEnd);
+
+    this.hitboxes.push(this.currentAttack);
+    this.currentAttack.hasHit = false;
+
+    // Change to proper attack state
+    this.state = "airAttacking";
     
     // Play sound
     this.playSound("swing");
@@ -1266,14 +1368,19 @@ class Stage {
     stroke("black");
     rectMode(CENTER);
     textAlign(CENTER, CENTER);
-    textSize(DAMAGE_METER_TEXT_SIZE);
+
+    // Show the players
+    textSize(PLAYER_NAME_TEXT_SIZE);
+    text("PLAYER 1", PLAYER_ONE_START_X, DAMAGE_METER_Y + DAMAGE_METER_GAP);
+    text("PLAYER 2", PLAYER_TWO_START_X, DAMAGE_METER_Y + DAMAGE_METER_GAP);
 
     // Show the percent
-    let playerOnePercent = str(playerOne.percentage);
-    let playerTwoPercent = str(playerTwo.percentage);
+    textSize(DAMAGE_METER_TEXT_SIZE);
+    let playerOnePercent = String(playerOne.percentage);
+    let playerTwoPercent = String(playerTwo.percentage);
 
-    text(playerOnePercent, PLAYER_ONE_START_X, DAMAGE_METER_Y);
-    text(playerTwoPercent, PLAYER_TWO_START_X, DAMAGE_METER_Y);
+    text(playerOnePercent + "%", PLAYER_ONE_START_X, DAMAGE_METER_Y);
+    text(playerTwoPercent + "%", PLAYER_TWO_START_X, DAMAGE_METER_Y);
 
     // Show the stocks
     for (let i = 0; i < playerOne.stocks; i++) {
@@ -1284,19 +1391,38 @@ class Stage {
 
 // Load sounds and sprites
 function preload() {
+
+  // Stage sounds
   backgroundMusic = loadSound("assets/stage/sounds/backgroundmusic.mp3");
   countdownAnnouncer = loadSound("assets/stage/sounds/countdown.mp3");
-  marthAppear = loadSound("assets/marth/sounds/marthappear.mp3");
-  marthRun1 = loadSound("assets/marth/sounds/marthrun1.mp3");
-  marthRun2 = loadSound("assets/marth/sounds/marthrun2.mp3");
-  marthRun3 = loadSound("assets/marth/sounds/marthrun3.mp3");
-  marthSweetHit = loadSound("assets/marth/sounds/marthsweetspot.mp3");
-  marthSwing = loadSound("assets/marth/sounds/marthswing.mp3");
-  marthJump = loadSound("assets/marth/sounds/marthjump.mp3");
-  marthDoubleJump = loadSound("assets/marth/sounds/marthdoublejump.mp3");
-  marthLand = loadSound("assets/marth/sounds/marthland.mp3");
-  marthSquat = loadSound("assets/marth/sounds/marthsquat.mp3");
-  marthRise = loadSound("assets/marth/sounds/marthrise.mp3");
+  marthWin = loadSound("assets/stage/sounds/marthwin.mp3");
+  gameEndMusic = loadSound("assets/stage/sounds/gameendmusic.mp3");
+
+  // Player 1 sounds
+  marthAppearOne = loadSound("assets/marth/sounds/marthappear.mp3");
+  marthRun1One = loadSound("assets/marth/sounds/marthrun1.mp3");
+  marthRun2One = loadSound("assets/marth/sounds/marthrun2.mp3");
+  marthRun3One = loadSound("assets/marth/sounds/marthrun3.mp3");
+  marthSweetHitOne = loadSound("assets/marth/sounds/marthsweetspot.mp3");
+  marthSwingOne = loadSound("assets/marth/sounds/marthswing.mp3");
+  marthJumpOne = loadSound("assets/marth/sounds/marthjump.mp3");
+  marthDoubleJumpOne = loadSound("assets/marth/sounds/marthdoublejump.mp3");
+  marthLandOne = loadSound("assets/marth/sounds/marthland.mp3");
+  marthSquatOne = loadSound("assets/marth/sounds/marthsquat.mp3");
+  marthRiseOne = loadSound("assets/marth/sounds/marthrise.mp3");
+
+  // Player 2 sounds
+  marthAppearTwo = loadSound("assets/marth/sounds/marthappear.mp3");
+  marthRun1Two = loadSound("assets/marth/sounds/marthrun1.mp3");
+  marthRun2Two = loadSound("assets/marth/sounds/marthrun2.mp3");
+  marthRun3Two = loadSound("assets/marth/sounds/marthrun3.mp3");
+  marthSweetHitTwo = loadSound("assets/marth/sounds/marthsweetspot.mp3");
+  marthSwingTwo = loadSound("assets/marth/sounds/marthswing.mp3");
+  marthJumpTwo = loadSound("assets/marth/sounds/marthjump.mp3");
+  marthDoubleJumpTwo = loadSound("assets/marth/sounds/marthdoublejump.mp3");
+  marthLandTwo = loadSound("assets/marth/sounds/marthland.mp3");
+  marthSquatTwo = loadSound("assets/marth/sounds/marthsquat.mp3");
+  marthRiseTwo = loadSound("assets/marth/sounds/marthrise.mp3");
 }
 
 // Setup player
@@ -1309,32 +1435,32 @@ function setup() {
   
   // Player 1 sounds
   let playerOneSounds = {
-    appear: marthAppear,
-    jump: marthJump,
-    doubleJump: marthDoubleJump,
-    land: marthLand,
-    run1: marthRun1,
-    run2: marthRun2,
-    run3: marthRun3,
-    squat: marthSquat,
-    rise: marthRise,
-    sweet: marthSweetHit,
-    swing: marthSwing,
+    appear: marthAppearOne,
+    jump: marthJumpOne,
+    doubleJump: marthDoubleJumpOne,
+    land: marthLandOne,
+    run1: marthRun1One,
+    run2: marthRun2One,
+    run3: marthRun3One,
+    squat: marthSquatOne,
+    rise: marthRiseOne,
+    sweet: marthSweetHitOne,
+    swing: marthSwingOne,
   };
   
   // Player 2 sounds
   let playerTwoSounds = {
-    appear: marthAppear,
-    jump: marthJump,
-    doubleJump: marthDoubleJump,
-    land: marthLand,
-    run1: marthRun1,
-    run2: marthRun2,
-    run3: marthRun3,
-    squat: marthSquat,
-    rise: marthRise,
-    sweet: marthSweetHit,
-    swing: marthSwing,
+    appear: marthAppearTwo,
+    jump: marthJumpTwo,
+    doubleJump: marthDoubleJumpTwo,
+    land: marthLandTwo,
+    run1: marthRun1Two,
+    run2: marthRun2Two,
+    run3: marthRun3Two,
+    squat: marthSquatTwo,
+    rise: marthRiseTwo,
+    sweet: marthSweetHitTwo,
+    swing: marthSwingTwo,
   };
 
   // Create player 1
@@ -1386,6 +1512,10 @@ function draw() {
   // gameOver state
   else if (gameState === "gameOver") {
     displayWinner(winner);
+    backgroundMusic.stop();
+    if (!gameEndMusic.isPlaying()) {
+      gameEndMusic.play();
+    }
   }
 }
 
@@ -1437,27 +1567,34 @@ function keyPressed() {
   
           // Attacking left and right
           if (keyIsDown(playerOne.controls.left) || keyIsDown(playerOne.controls.right)) {
-            playerOne.spawnHitbox(marthForwardTilt, false, false);
+            playerOne.spawnGroundHitbox(marthForwardTilt, false);
           }
   
           // Attacking up
           else if (keyIsDown(playerOne.controls.up)) {
-            playerOne.spawnHitbox(marthUpTilt, false, false);
+            playerOne.spawnGroundHitbox(marthUpTilt, false);
           }
   
           // Default attack
           else {
-            playerOne.spawnHitbox(marthForwardTilt, false, false);
+            playerOne.spawnGroundHitbox(marthForwardTilt, false);
           }
         }
   
         // Attacks from crouching state
         else if (playerOne.state === "crouching") {
           if (keyIsDown(playerOne.controls.down)) {
-            playerOne.spawnHitbox(marthDownTilt, true, false);
+            playerOne.spawnGroundHitbox(marthDownTilt, true);
           }
           else {
-            playerOne.spawnHitbox(marthDownTilt, true, false);
+            playerOne.spawnGroundHitbox(marthDownTilt, true);
+          }
+        }
+
+        // Attacks from airborne state
+        if (playerOne.state === "airborne") {
+          if (keyIsDown(playerOne.controls.left) || keyIsDown(playerOne.controls.right)) {
+            playerOne.spawnAirHitbox(marthForwardAir);
           }
         }
       }
@@ -1503,27 +1640,34 @@ function keyPressed() {
         // Attacks from idle state
         if (playerTwo.state === "idle") {
           if (keyIsDown(playerTwo.controls.left) || keyIsDown(playerTwo.controls.right)) {
-            playerTwo.spawnHitbox(marthForwardTilt, false, false);
+            playerTwo.spawnGroundHitbox(marthForwardTilt, false);
           }
   
           // Attacking up
           else if (keyIsDown(playerTwo.controls.up)) {
-            playerTwo.spawnHitbox(marthUpTilt, false, false);
+            playerTwo.spawnGroundHitbox(marthUpTilt, false);
           }
   
           // Default attack
           else {
-            playerTwo.spawnHitbox(marthForwardTilt, false, false);
+            playerTwo.spawnGroundHitbox(marthForwardTilt, false);
           }
         }
   
         // Attacks from crouching state
         else if (playerTwo.state === "crouching") {
           if (keyIsDown(playerTwo.controls.down)) {
-            playerTwo.spawnHitbox(marthDownTilt, true, false);
+            playerTwo.spawnGroundHitbox(marthDownTilt, true);
           }
           else {
-            playerTwo.spawnHitbox(marthDownTilt, true, false);
+            playerTwo.spawnGroundHitbox(marthDownTilt, true);
+          }
+        }
+
+        // Attacks from airborne state
+        if (playerTwo.state === "airborne") {
+          if (keyIsDown(playerTwo.controls.left) || keyIsDown(playerTwo.controls.right)) {
+            playerOne.spawnAirHitbox(marthForwardAir);
           }
         }
       }
@@ -1540,6 +1684,8 @@ function keyPressed() {
       gameState = "starting";
       countdownBegun = false;
       countdownTimer = 180;
+      gameEndMusic.stop();
+      backgroundMusic.loop();
 
       // Reset players
       playerOne.resetPlayer();
@@ -1586,7 +1732,7 @@ function countDown() {
 
     // Draw stage
     stage.update();
-    stage.display();
+    stage.display(playerOne, playerTwo);
 
     // Display player
     playerOne.display();
@@ -1597,7 +1743,7 @@ function countDown() {
 
     // Draw stage
     stage.update();
-    stage.display();
+    stage.display(playerOne, playerTwo);
 
     // Display player
     playerOne.display();
@@ -1608,7 +1754,7 @@ function countDown() {
 
     // Draw stage
     stage.update();
-    stage.display();
+    stage.display(playerOne, playerTwo);
 
     // Display player
     playerOne.display();
@@ -1621,7 +1767,7 @@ function countDown() {
   
     // Draw stage
     stage.update();
-    stage.display();
+    stage.display(playerOne, playerTwo);
   
     // Update player states and movement
     playerOne.update(playerTwo);
