@@ -19,6 +19,8 @@
 // https://www.ssbwiki.com/Sakurai_angle - Sakurai's special angle
 // https://editor.p5js.org/jesse_harding/sketches/dzF-WbKuk - platform collision
 // https://www.youtube.com/playlist?list=PLf9yt-2olqyLxr-vouWl-qk4toUfjF2LC - street fighter clone
+// https://www.reddit.com/r/smashbros/comments/1h78zyq/how_does_an_attacks_frames_on_shield_and_ending/ - how end lag works with frames
+// https://www.youtube.com/watch?v=ht3bZcLxBlQ - smash mechanics explanation
 
 // In game:
 // https://www.spriters-resource.com/custom_edited/supersmashbroscustoms/asset/62979/ - stage
@@ -67,7 +69,7 @@ let winner = null;
 
 // Player 1 constants and variables
 const PLAYER_ONE_START_X = 520;
-const PLAYER_ONE_START_Y = 600;
+const PLAYER_ONE_START_Y = 550;
 const PLAYER_ONE_SPAWN_X = 520;
 const PLAYER_ONE_SPAWN_Y = 200;
 
@@ -86,7 +88,7 @@ let playerOneControls = {
 
 // Player 2 constants and variables
 const PLAYER_TWO_START_X = 920;
-const PLAYER_TWO_START_Y = 600;
+const PLAYER_TWO_START_Y = 550;
 const PLAYER_TWO_SPAWN_X = 920;
 const PLAYER_TWO_SPAWN_Y = 200;
 
@@ -105,7 +107,7 @@ let playerTwoControls = {
 
 // Stage constants and variables
 const STAGE_X = 320;
-const STAGE_Y = 600;
+const STAGE_Y = 550;
 const STAGE_WIDTH = 800;
 const STAGE_HEIGHT = 50;
 
@@ -306,7 +308,7 @@ let marthForwardAir = {
   knockback: 40,
   growthKnockback: 80,
   shieldStun: 5,
-  endingLag: 10,
+  landingLag: 10,
   autoCancelStart: 0,
   autoCancelEnd: 36,
 };
@@ -868,11 +870,6 @@ class Player {
     case "airAttacking":
 
       // State behavior
-      let currentFrame = this.currentAttack.currentFrame;
-      let autoCancelStartingWindow = this.currentAttack.autoCancelStart;
-      let autoCancelEndingWindow = this.currentAttack.autoCancelEnd;
-      let endingLag = this.currentAttack.endingLag;
-
       this.airMovement();
       
       console.log(playerOne.currentAttack.currentFrame);
@@ -898,17 +895,23 @@ class Player {
       // If the opponent lands while air attacking
       if (this.touchingTop) {
         this.state = "landing";
+
+        console.log("current frame", this.currentAttack.currentFrame);
+
+        let currentFrame = this.currentAttack.currentFrame;
+        let autoCancelStartingWindow = this.currentAttack.autoCancelStart;
+        let autoCancelEndingWindow = this.currentAttack.autoCancelEnd;
+        let landingLag = this.currentAttack.landingLag;
+        
+        // Remove the attack
+        this.hitboxes = [];
+        this.currentAttack = null;
         
         // Reset velocity and snap to stage
         this.velocity.y = 0;
         this.position.y = STAGE_Y - this.stats.currentHeight / 2;
-
-        console.log("endingLag", this.currentAttack.endingLag);
-
-        // Remove the attack
-        this.hitboxes = [];
-        this.currentAttack = null;
-
+        
+        
         // Determine the endlag based on the current frame
         if (currentFrame > autoCancelEndingWindow) {
           this.landingLagTimer = HARD_LANDING_LAG_TIMER;
@@ -917,10 +920,12 @@ class Player {
           this.landingLagTimer = HARD_LANDING_LAG_TIMER;
         }
         else {
-          this.landingLagTimer = endingLag;
+          this.landingLagTimer = landingLag;
         }
-      }
 
+        console.log("landingLag", this.landingLagTimer);
+      }
+      
       // If the opponent finishes the attack in the air
       else if (this.hitboxes.length === 0) {
         this.state = "airborne";
@@ -1141,7 +1146,7 @@ class Player {
       attack.offsetY, attack.width, attack.height, attack.damage, 
       attack.startingFrames, attack.activeFrames, attack.endingFrames, 
       attack.angle, attack.knockback, attack.growthKnockback, attack.shieldStun, 
-      attack.endingLag, attack.autoCancelStart, attack.autoCancelEnd);
+      attack.landingLag, attack.autoCancelStart, attack.autoCancelEnd);
 
     this.hitboxes.push(this.currentAttack);
     this.currentAttack.hasHit = false;
@@ -1203,8 +1208,9 @@ class Player {
 
 // Create an attack
 class Attack {
-  constructor(playerDirection, playerX, playerY, attackOffsetX, attackOffsetY, attackWidth, attackHeight, attackDamage, 
-    attackStartingFrames, attackActiveFrames, attackEndingFrames, attackAngle, attackBaseKnockback, attackGrowthKnockBack) {
+  constructor(playerDirection, playerX, playerY, attackOffsetX, attackOffsetY, attackWidth, 
+    attackHeight, attackDamage, attackStartingFrames, attackActiveFrames, attackEndingFrames, attackAngle, 
+    attackBaseKnockback, attackGrowthKnockBack, attackLandingLag, attackAutoCancelStart, attackAutoCancelEnd) {
 
     // Hitbox and size
     this.x = 0;
@@ -1228,6 +1234,11 @@ class Attack {
     this.totalFrames = this.startingFrames + this.activeFrames + this.endingFrames;
     this.currentFrame = 0;
     this.hasHit = false;
+
+    // Air attack specifics
+    this.landingLag = attackLandingLag;
+    this.autoCancelStart = attackAutoCancelStart;
+    this.autoCancelEnd = attackAutoCancelEnd;
   }
 
   // Show the hitbox for the attack
