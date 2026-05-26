@@ -37,6 +37,11 @@
 // https://sounds.spriters-resource.com/wii_u/supersmashbrosforwiiu/asset/397960/ - more marth sounds
 
 // Things to do:
+// jumping into top blastzone should not kill
+// Fix null on currentFrame
+// Create multihit attacks jab, nair, sideb
+// Add controls
+// Fix moving while attacking in air
 // 1. fix moving after hitstun
 // 2. add sounds kill sound, marth voice
 // 3. display stocks
@@ -84,6 +89,7 @@ let playerOneControls = {
   down: 83, // S key
   shortHop: 81, // Q key
   attack: 85, // U key
+  special: 89, // Y key
 };
 
 // Player 2 constants and variables
@@ -99,10 +105,11 @@ let playerTwoControls = {
   left: 37, // Left arrow
   right: 39, // Right arrow
   jump: 38, // Up arrow
-  up: 16, // Shift key
+  up: 33, // Page up / Numberpad 9
   down: 40, // Down arrow
-  shortHop: 36, // Home / Numberpad 7
-  attack: 191, // Slash
+  shortHop: 36, // Home key / Numberpad 7
+  attack: 191, // Slash key
+  special: 16, // Shift key
 };
 
 // Stage constants and variables
@@ -132,7 +139,7 @@ const DAMAGE_METER_GAP = 30;
 let countdownTimer = 180;
 let countdownBegun = false;
 let marthWinDone = false;
-let gameState = "starting"; // starting, playing, gameOver
+let gameState = "starting"; // menu, controls, starting, playing, gameOver
 
 // Sounds
 let backgroundMusic;
@@ -298,8 +305,8 @@ let marthUpTilt = {
 let marthForwardAir = {
   offsetX: 60,
   offsetY: 0,
-  width: 100,
-  height: 120,
+  width: 120,
+  height: 130,
   startingFrames: 6,
   activeFrames: 2,
   endingFrames: 29,
@@ -311,6 +318,44 @@ let marthForwardAir = {
   landingLag: 10,
   autoCancelStart: 0,
   autoCancelEnd: 36,
+};
+
+// Down air
+let marthDownAir = {
+  offsetX: 0,
+  offsetY: 60,
+  width: 120,
+  height: 120,
+  startingFrames: 9,
+  activeFrames: 4,
+  endingFrames: 46,
+  damage: 15,
+  angle: -270,
+  knockback: 40,
+  growthKnockback: 80,
+  shieldStun: 5,
+  landingLag: 14,
+  autoCancelStart: 2,
+  autoCancelEnd: 55,
+};
+
+// Up air
+let marthUpAir = {
+  offsetX: 0,
+  offsetY: -40,
+  width: 110,
+  height: 110,
+  startingFrames: 5,
+  activeFrames: 4,
+  endingFrames: 36,
+  damage: 13,
+  angle: -90,
+  knockback: 40,
+  growthKnockback: 84,
+  shieldStun: 5,
+  landingLag: 8,
+  autoCancelStart: 2,
+  autoCancelEnd: 38,
 };
 
 // Create the base player
@@ -604,6 +649,8 @@ class Player {
 
       if (this.hitstunTimer > 0) {
         this.state = "hitstun";
+        this.hitboxes = [];
+        this.currentAttack = null;
       }
 
       break;
@@ -654,6 +701,8 @@ class Player {
 
       if (this.hitstunTimer > 0) {
         this.state = "hitstun";
+        this.hitboxes = [];
+        this.currentAttack = null;
       }
 
       break;
@@ -684,6 +733,8 @@ class Player {
 
       if (this.hitstunTimer > 0) {
         this.state = "hitstun";
+        this.hitboxes = [];
+        this.currentAttack = null;
       }
 
       break;
@@ -723,6 +774,8 @@ class Player {
 
       if (this.hitstunTimer > 0) {
         this.state = "hitstun";
+        this.hitboxes = [];
+        this.currentAttack = null;
       }
 
       break;
@@ -748,6 +801,8 @@ class Player {
     
       if (this.hitstunTimer > 0) {
         this.state = "hitstun";
+        this.hitboxes = [];
+        this.currentAttack = null;
       }
 
       break;
@@ -788,6 +843,8 @@ class Player {
 
       if (this.hitstunTimer > 0) {
         this.state = "hitstun";
+        this.hitboxes = [];
+        this.currentAttack = null;
       }
 
       break;
@@ -821,6 +878,8 @@ class Player {
 
       if (this.hitstunTimer > 0) {
         this.state = "hitstun";
+        this.hitboxes = [];
+        this.currentAttack = null;
       }
       
       break;
@@ -862,6 +921,8 @@ class Player {
 
       if (this.hitstunTimer > 0) {
         this.state = "hitstun";
+        this.hitboxes = [];
+        this.currentAttack = null;
       }
       
       break;
@@ -872,7 +933,7 @@ class Player {
       // State behavior
       this.airMovement();
       
-      console.log(playerOne.currentAttack.currentFrame);
+      console.log("current frame", this.currentAttack.currentFrame);
       
       // Control the hitboxes
       for (let i = this.hitboxes.length - 1; i >= 0; i--) {
@@ -895,45 +956,46 @@ class Player {
       // If the opponent lands while air attacking
       if (this.touchingTop) {
         this.state = "landing";
-
-        console.log("current frame", this.currentAttack.currentFrame);
-
-        let currentFrame = this.currentAttack.currentFrame;
-        let autoCancelStartingWindow = this.currentAttack.autoCancelStart;
-        let autoCancelEndingWindow = this.currentAttack.autoCancelEnd;
-        let landingLag = this.currentAttack.landingLag;
         
-        // Remove the attack
-        this.hitboxes = [];
-        this.currentAttack = null;
-        
-        // Reset velocity and snap to stage
-        this.velocity.y = 0;
-        this.position.y = STAGE_Y - this.stats.currentHeight / 2;
-        
-        
-        // Determine the endlag based on the current frame
-        if (currentFrame > autoCancelEndingWindow) {
-          this.landingLagTimer = HARD_LANDING_LAG_TIMER;
+        if (this.currentAttack !== null) {
+          let currentFrame = this.currentAttack.currentFrame;
+          let autoCancelStartingWindow = this.currentAttack.autoCancelStart;
+          let autoCancelEndingWindow = this.currentAttack.autoCancelEnd;
+          let landingLag = this.currentAttack.landingLag;
+          
+          // Remove the attack
+          this.hitboxes = [];
+          this.currentAttack = null;
+          
+          // Reset velocity and snap to stage
+          this.velocity.y = 0;
+          this.position.y = STAGE_Y - this.stats.currentHeight / 2;
+          
+          
+          // Determine the endlag based on the current frame
+          if (currentFrame >= autoCancelEndingWindow) {
+            this.landingLagTimer = HARD_LANDING_LAG_TIMER;
+          }
+          else if (currentFrame <= autoCancelStartingWindow) {
+            this.landingLagTimer = HARD_LANDING_LAG_TIMER;
+          }
+          else {
+            this.landingLagTimer = landingLag;
+          }
         }
-        else if (currentFrame < autoCancelStartingWindow) {
-          this.landingLagTimer = HARD_LANDING_LAG_TIMER;
-        }
-        else {
-          this.landingLagTimer = landingLag;
-        }
-
-        console.log("landingLag", this.landingLagTimer);
+        console.log("landing lag", this.landingLagTimer);
       }
       
       // If the opponent finishes the attack in the air
       else if (this.hitboxes.length === 0) {
         this.state = "airborne";
-
+        
       }
       
       if (this.hitstunTimer > 0) {
         this.state = "hitstun";
+        this.hitboxes = [];
+        this.currentAttack = null;
       }
 
       break;
@@ -1210,7 +1272,7 @@ class Player {
 class Attack {
   constructor(playerDirection, playerX, playerY, attackOffsetX, attackOffsetY, attackWidth, 
     attackHeight, attackDamage, attackStartingFrames, attackActiveFrames, attackEndingFrames, attackAngle, 
-    attackBaseKnockback, attackGrowthKnockBack, attackLandingLag, attackAutoCancelStart, attackAutoCancelEnd) {
+    attackBaseKnockback, attackGrowthKnockBack, attackShieldStun, attackLandingLag, attackAutoCancelStart, attackAutoCancelEnd) {
 
     // Hitbox and size
     this.x = 0;
@@ -1225,6 +1287,7 @@ class Attack {
     this.knockback = attackBaseKnockback;
     this.growthKnockback = attackGrowthKnockBack;
     this.angle = attackAngle;
+    this.shieldStun = attackShieldStun;
     this.currentAngle = null;
 
     // Frame data
@@ -1627,9 +1690,13 @@ function keyPressed() {
   
         // Attacks from crouching state
         else if (playerOne.state === "crouching") {
+
+          // Attacking down
           if (keyIsDown(playerOne.controls.down)) {
             playerOne.spawnGroundHitbox(marthDownTilt, true);
           }
+
+          // Default attack
           else {
             playerOne.spawnGroundHitbox(marthDownTilt, true);
           }
@@ -1637,9 +1704,23 @@ function keyPressed() {
 
         // Attacks from airborne state
         else if (playerOne.state === "airborne") {
+
+          // Attacking forward
           if (keyIsDown(playerOne.controls.left) || keyIsDown(playerOne.controls.right)) {
             playerOne.spawnAirHitbox(marthForwardAir);
           }
+
+          // Attacking down
+          else if (keyIsDown(playerOne.controls.down)) {
+            playerOne.spawnAirHitbox(marthDownAir);
+          }
+
+          // Attacking up
+          else if (keyIsDown(playerOne.controls.up)) {
+            playerOne.spawnAirHitbox(marthUpAir);
+          }
+
+          // Default attack
           else {
             playerOne.spawnAirHitbox(marthForwardAir);
           }
@@ -1686,6 +1767,8 @@ function keyPressed() {
   
         // Attacks from idle state
         if (playerTwo.state === "idle") {
+
+          // Attacking forward
           if (keyIsDown(playerTwo.controls.left) || keyIsDown(playerTwo.controls.right)) {
             playerTwo.spawnGroundHitbox(marthForwardTilt, false);
           }
@@ -1703,9 +1786,13 @@ function keyPressed() {
   
         // Attacks from crouching state
         else if (playerTwo.state === "crouching") {
+
+          // Attacking down
           if (keyIsDown(playerTwo.controls.down)) {
             playerTwo.spawnGroundHitbox(marthDownTilt, true);
           }
+
+          // Default attack
           else {
             playerTwo.spawnGroundHitbox(marthDownTilt, true);
           }
@@ -1713,9 +1800,23 @@ function keyPressed() {
 
         // Attacks from airborne state
         else if (playerTwo.state === "airborne") {
+
+          // Attacking forward
           if (keyIsDown(playerTwo.controls.left) || keyIsDown(playerTwo.controls.right)) {
             playerTwo.spawnAirHitbox(marthForwardAir);
           }
+
+          // Attacking down
+          else if (keyIsDown(playerTwo.controls.down)) {
+            playerTwo.spawnAirHitbox(marthDownAir);
+          }
+
+          // Attacking up
+          else if (keyIsDown(playerTwo.controls.up)) {
+            playerTwo.spawnAirHitbox(marthUpAir);
+          }
+
+          // Default attack
           else {
             playerTwo.spawnAirHitbox(marthForwardAir);
           }
