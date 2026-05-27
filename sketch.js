@@ -33,15 +33,15 @@
 // https://www.youtube.com/watch?v=7HzxdnW2gaI - marth win sound
 // https://www.youtube.com/watch?v=14dHroamo2E - final ko sound
 // https://www.myinstants.com/en/instant/stage-fallout-super-smash-bros-ultimate-16980/ - regular death sound
-
+// https://www.myinstants.com/en/instant/game-super-smash-bros-6647/ - announcer game sound
 // https://sounds.spriters-resource.com/wii_u/supersmashbrosforwiiu/asset/397960/ - more marth sounds
+// https://www.hiclipart.com/free-transparent-background-png-clipart-vvulw - marth icon
+// https://www.spriters-resource.com/custom_edited/supersmashbroscustoms/asset/196310/ - marth portrait
 
 // Things to do:
 // jumping into top blastzone should not kill
-// Fix null on currentFrame
 // Create multihit attacks jab, nair, sideb
 // Add controls
-// Fix moving while attacking in air
 // 1. fix moving after hitstun
 // 2. add sounds kill sound, marth voice
 // 3. display stocks
@@ -139,6 +139,7 @@ const DAMAGE_METER_GAP = 30;
 let countdownTimer = 180;
 let countdownBegun = false;
 let marthWinDone = false;
+let gameAnnouncerPlayed = false;
 let gameState = "starting"; // menu, controls, starting, playing, gameOver
 
 // Sounds
@@ -146,6 +147,7 @@ let backgroundMusic;
 let countdownAnnouncer;
 let marthWin;
 let gameEndMusic;
+let gameAnnouncer;
 
 // Player one
 let marthAppearOne;
@@ -161,6 +163,8 @@ let marthLandOne;
 let marthHurtOne;
 let marthSquatOne;
 let marthRiseOne;
+let koOne;
+let finalKoOne;
 
 // Player two
 let marthAppearTwo;
@@ -176,6 +180,8 @@ let marthLandTwo;
 let marthHurtTwo;
 let marthSquatTwo;
 let marthRiseTwo;
+let koTwo;
+let finalKoTwo;
 
 // Marth stats
 let playerOneMarthStats = {
@@ -495,7 +501,7 @@ class Player {
     if (this.state === "running" || this.state === "idle") {
       this.velocity.x = constrain(this.velocity.x, -this.stats.runSpeed, this.stats.runSpeed);
     }
-    if (this.state === "airborne") {
+    if (this.state === "airborne" || this.state === "airAttacking") {
       this.velocity.x = constrain(this.velocity.x, -this.stats.airSpeed, this.stats.airSpeed);
     }
   }
@@ -595,7 +601,7 @@ class Player {
       }
       // Reset the hit flag
       else {
-        hurtbox.isHit = false;
+        hurtbox.hasHit = false;
       }
     }
   }
@@ -644,6 +650,14 @@ class Player {
         this.state = "dead";
         if (this.stocks > 0) {
           this.stocks--;
+
+          // Play death sound
+          if (this.stocks === 0) {
+            this.playSound("finalKo");
+          }
+          else {
+            this.playSound("ko");
+          }
         }
       }
 
@@ -696,6 +710,14 @@ class Player {
         this.state = "dead";
         if (this.stocks > 0) {
           this.stocks--;
+
+          // Play death sound
+          if (this.stocks === 0) {
+            this.playSound("finalKo");
+          }
+          else {
+            this.playSound("ko");
+          }
         }
       }
 
@@ -769,6 +791,14 @@ class Player {
         this.state = "dead";
         if (this.stocks > 0) {
           this.stocks--;
+
+          // Play death sound
+          if (this.stocks === 0) {
+            this.playSound("finalKo");
+          }
+          else {
+            this.playSound("ko");
+          }
         }
       }
 
@@ -796,6 +826,14 @@ class Player {
         this.state = "dead";
         if (this.stocks > 0) {
           this.stocks--;
+
+          // Play death sound
+          if (this.stocks === 0) {
+            this.playSound("finalKo");
+          }
+          else {
+            this.playSound("ko");
+          }
         }
       }
     
@@ -838,6 +876,14 @@ class Player {
         this.state = "dead";
         if (this.stocks > 0) {
           this.stocks--;
+
+          // Play death sound
+          if (this.stocks === 0) {
+            this.playSound("finalKo");
+          }
+          else {
+            this.playSound("ko");
+          }
         }
       }
 
@@ -933,8 +979,6 @@ class Player {
       // State behavior
       this.airMovement();
       
-      console.log("current frame", this.currentAttack.currentFrame);
-      
       // Control the hitboxes
       for (let i = this.hitboxes.length - 1; i >= 0; i--) {
         
@@ -983,7 +1027,6 @@ class Player {
             this.landingLagTimer = landingLag;
           }
         }
-        console.log("landing lag", this.landingLagTimer);
       }
       
       // If the opponent finishes the attack in the air
@@ -1504,6 +1547,7 @@ function preload() {
   countdownAnnouncer = loadSound("assets/stage/sounds/countdown.mp3");
   marthWin = loadSound("assets/stage/sounds/marthwin.mp3");
   gameEndMusic = loadSound("assets/stage/sounds/gameendmusic.mp3");
+  gameAnnouncer = loadSound("assets/stage/sounds/game.mp3");
 
   // Player 1 sounds
   marthAppearOne = loadSound("assets/marth/sounds/marthappear.mp3");
@@ -1517,6 +1561,8 @@ function preload() {
   marthLandOne = loadSound("assets/marth/sounds/marthland.mp3");
   marthSquatOne = loadSound("assets/marth/sounds/marthsquat.mp3");
   marthRiseOne = loadSound("assets/marth/sounds/marthrise.mp3");
+  koOne = loadSound("assets/marth/sounds/ko.mp3");
+  finalKoOne = loadSound("assets/marth/sounds/finalKo.mp3");
 
   // Player 2 sounds
   marthAppearTwo = loadSound("assets/marth/sounds/marthappear.mp3");
@@ -1530,6 +1576,8 @@ function preload() {
   marthLandTwo = loadSound("assets/marth/sounds/marthland.mp3");
   marthSquatTwo = loadSound("assets/marth/sounds/marthsquat.mp3");
   marthRiseTwo = loadSound("assets/marth/sounds/marthrise.mp3");
+  koTwo = loadSound("assets/marth/sounds/ko.mp3");
+  finalKoTwo = loadSound("assets/marth/sounds/finalKo.mp3");
 }
 
 // Setup player
@@ -1553,6 +1601,8 @@ function setup() {
     rise: marthRiseOne,
     sweet: marthSweetHitOne,
     swing: marthSwingOne,
+    ko: koOne,
+    finalKo: finalKoOne,
   };
   
   // Player 2 sounds
@@ -1568,6 +1618,8 @@ function setup() {
     rise: marthRiseTwo,
     sweet: marthSweetHitTwo,
     swing: marthSwingTwo,
+    ko: koTwo,
+    finalKo: finalKoTwo,
   };
 
   // Create player 1
@@ -1981,10 +2033,22 @@ function gameEnd(playerOneStocks, playerTwoStocks) {
   if (playerOneStocks === 0) {
     winner = playerTwo;
     gameState = "gameOver";
+
+    // Play game sound
+    if (!gameAnnouncerPlayed) {
+      gameAnnouncer.play();
+      gameAnnouncerPlayed = true;
+    }
   }
   if (playerTwoStocks === 0) {
     winner = playerOne;
     gameState = "gameOver";
+
+    // Play game sound
+    if (!gameAnnouncerPlayed) {
+      gameAnnouncer.play();
+      gameAnnouncerPlayed = true;
+    }
   }
 }
 
