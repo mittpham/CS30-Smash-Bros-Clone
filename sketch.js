@@ -237,12 +237,15 @@ let marthJabOne = {
   width: 100,
   height: 100,
   startingFrames: 5,
-  activeFrames: 2,
+  activeFrames: 1,
   endingFrames: 19,
   damage: 5,
   angle: 361,
   knockback: 30,
   growthKnockback: 12,
+  shieldStun: 6,
+  transitionFrame: 11,
+  autoTransition: true,
 };
 
 let marthJabTwo = {
@@ -251,13 +254,18 @@ let marthJabTwo = {
   width: 100,
   height: 100,
   startingFrames: 4,
-  activeFrames: 2,
+  activeFrames: 1,
   endingFrames: 23,
   damage: 6,
   angle: 45,
   knockback: 62,
   growthKnockback: 75,
+  shieldStun: 6,
+  transitionFrame: 0,
+  autoTransition: false,
 };
+
+let marthJab = [marthJabOne, marthJabTwo];
 
 // Forward tilt
 let marthForwardTilt = {
@@ -282,7 +290,7 @@ let marthDownTilt = {
   width: 120,
   height: 40,
   startingFrames: 7,
-  activeFrames: 2,
+  activeFrames: 1,
   endingFrames: 15,
   damage: 10,
   angle: -30,
@@ -307,6 +315,28 @@ let marthUpTilt = {
   shieldStun: 9,
 };
 
+// Neutral air
+let marthNeutralAirOne = {
+  offsetX: 20,
+  offsetY: -20,
+  width: 100,
+  height: 30,
+  startingFrames: 6,
+  activeFrames: 1,
+};
+
+let marthNeutralAirTwo = {
+  offsetX: 0,
+  offsetY: -20,
+  width: 150,
+  height: 30,
+  startingFrames: 15,
+  activeFrames: 6,
+
+};
+
+let marthNeutralAir = [marthNeutralAirOne, marthNeutralAirTwo];
+
 // Forward air
 let marthForwardAir = {
   offsetX: 60,
@@ -321,9 +351,16 @@ let marthForwardAir = {
   knockback: 40,
   growthKnockback: 80,
   shieldStun: 5,
+  transitionFrame: 0,
+  autoTransition: false,
   landingLag: 10,
   autoCancelStart: 0,
   autoCancelEnd: 36,
+};
+
+// Back air
+let marthBackAir = {
+  
 };
 
 // Down air
@@ -340,6 +377,8 @@ let marthDownAir = {
   knockback: 40,
   growthKnockback: 80,
   shieldStun: 5,
+  transitionFrame: 0,
+  autoTransition: false,
   landingLag: 14,
   autoCancelStart: 2,
   autoCancelEnd: 55,
@@ -359,6 +398,8 @@ let marthUpAir = {
   knockback: 40,
   growthKnockback: 84,
   shieldStun: 5,
+  transitionFrame: 0,
+  autoTransition: false,
   landingLag: 8,
   autoCancelStart: 2,
   autoCancelEnd: 38,
@@ -379,12 +420,14 @@ class Player {
     this.rage = 1;
     this.currentAttack = null;
     this.hitboxes = [];
+    this.multihitHitboxes = null;
+    this.multihitIndex = 0;
     this.spawnX = spawnX;
     this.spawnY = spawnY;
     this.sounds = sounds;
 
     // States
-    this.state = "idle"; // idle, running, crouching, airborne, jumpsquat, landing, dead, spawning, attacking, crouchAttacking, airAttacking, hitstun
+    this.state = "idle"; // idle, running, crouching, airborne, jumpsquat, landing, dead, spawning, attacking, crouchAttacking, airAttacking, multihitAttacking, hitstun
 
     // Flags/Conditions
     this.direction = true; // Right
@@ -406,6 +449,7 @@ class Player {
     this.angelPlatformTimer = ANGEL_PLATFORM_TIMER;
     this.attackFrameTimer = 0;
     this.hitstunTimer = 0;
+    this.multihitBuffer = 0;
   }
 
   // Display the player and hitboxes
@@ -576,7 +620,7 @@ class Player {
 
     // Make sure that there is an attack out currently and that the attack is in its active frames
     if (this.currentAttack !== null && 
-      this.currentAttack.currentFrame > this.currentAttack.startingFrames && 
+      this.currentAttack.currentFrame >= this.currentAttack.startingFrames && 
       this.currentAttack.currentFrame <= this.currentAttack.startingFrames + this.currentAttack.activeFrames) {
 
       // Player's hitbox's edges
@@ -845,7 +889,7 @@ class Player {
 
       break;
 
-    // Landing state behaviours and trigger
+    // landing state behaviours and trigger
     case "landing":
 
       // State behaviour
@@ -1043,7 +1087,16 @@ class Player {
 
       break;
 
-    // Dead state behavior
+    // multihitAttacking state behavior
+    case "multihitAttacking":
+
+      // State behavior
+
+      // State triggers
+
+      break;
+
+    // dead state behavior
     case "dead":
 
       // State behavior
@@ -1057,7 +1110,7 @@ class Player {
 
       break;
 
-    // Spawning state behavior and triggers
+    // spawning state behavior and triggers
     case "spawning":
 
       // State behavior
@@ -1244,6 +1297,7 @@ class Player {
     this.playSound("swing");
   }
 
+  // Create a new air attack
   spawnAirHitbox(attack) {
 
     // Make the players current attack a new instance
@@ -1251,13 +1305,34 @@ class Player {
       attack.offsetY, attack.width, attack.height, attack.damage, 
       attack.startingFrames, attack.activeFrames, attack.endingFrames, 
       attack.angle, attack.knockback, attack.growthKnockback, attack.shieldStun, 
-      attack.landingLag, attack.autoCancelStart, attack.autoCancelEnd);
+      attack.transitionFrame, attack.autoTransition, attack.landingLag, 
+      attack.autoCancelStart, attack.autoCancelEnd);
 
     this.hitboxes.push(this.currentAttack);
     this.currentAttack.hasHit = false;
 
     // Change to proper attack state
     this.state = "airAttacking";
+    
+    // Play sound
+    this.playSound("swing");
+  }
+
+  // Create a new multihit attack
+  spawnMultihit(attack) {
+
+    // Make the players current attack a new instance
+    this.currentAttack = new Attack(this.direction, this.position.x, this.position.y, attack.offsetX, 
+      attack.offsetY, attack.width, attack.height, attack.damage, 
+      attack.startingFrames, attack.activeFrames, attack.endingFrames, 
+      attack.angle, attack.knockback, attack.growthKnockback, attack.shieldStun, 
+      attack.transitionFrame, attack.autoTransition);
+
+    this.multihitHitboxes.push(this.currentAttack);
+    this.currentAttack.hasHit = false;
+
+    // Change to proper attack state
+    this.state = "multihitAttacking";
     
     // Play sound
     this.playSound("swing");
@@ -1315,7 +1390,7 @@ class Player {
 class Attack {
   constructor(playerDirection, playerX, playerY, attackOffsetX, attackOffsetY, attackWidth, 
     attackHeight, attackDamage, attackStartingFrames, attackActiveFrames, attackEndingFrames, attackAngle, 
-    attackBaseKnockback, attackGrowthKnockBack, attackShieldStun, attackLandingLag, attackAutoCancelStart, attackAutoCancelEnd) {
+    attackBaseKnockback, attackGrowthKnockBack, attackShieldStun, attackTransitionFrame, attackAutoTransition, attackLandingLag, attackAutoCancelStart, attackAutoCancelEnd) {
 
     // Hitbox and size
     this.x = 0;
@@ -1341,6 +1416,10 @@ class Attack {
     this.currentFrame = 0;
     this.hasHit = false;
 
+    // Multihit specifics
+    this.transitionFrame = attackTransitionFrame;
+    this.autoTransition = attackAutoTransition;
+
     // Air attack specifics
     this.landingLag = attackLandingLag;
     this.autoCancelStart = attackAutoCancelStart;
@@ -1355,7 +1434,7 @@ class Attack {
     noStroke();
 
     // Add a hitbox if the attack is active
-    if (this.currentFrame > this.startingFrames && this.currentFrame <= this.startingFrames + this.activeFrames) {
+    if (this.currentFrame >= this.startingFrames && this.currentFrame <= this.startingFrames + this.activeFrames) {
       fill("blue");
       rect(this.x, this.y, this.w, this.h);
     } 
@@ -1638,8 +1717,18 @@ function setup() {
 function draw() {
   background(0);
 
+  // menu state
+  if (gameState === "menu") {
+    displayMenu();
+  }
+
+  // controls state
+  else if (gameState === "controls") {
+    displayControls();
+  }
+
   // starting state
-  if (gameState === "starting") {
+  else if (gameState === "starting") {
 
     // Show countdown
     countDown();
@@ -1908,6 +1997,16 @@ function keyPressed() {
       winner = null;
     }
   }
+}
+
+// Menu screen for game
+function displayMenu() {
+
+}
+
+// Controls for players
+function displayControls() {
+
 }
 
 // Start the countdown before the game starts
