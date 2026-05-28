@@ -261,7 +261,7 @@ let marthJabTwo = {
   knockback: 62,
   growthKnockback: 75,
   shieldStun: 6,
-  transitionFrame: 0,
+  transitionFrame: null,
   autoTransition: false,
 };
 
@@ -323,6 +323,17 @@ let marthNeutralAirOne = {
   height: 30,
   startingFrames: 6,
   activeFrames: 1,
+  endingFrames: 0,
+  damage: 5,
+  angle: -90,
+  knockback: 35,
+  growthKnockback: 50,
+  shieldStun: 3,
+  transitionFrame: 7,
+  autoTransition: true,
+  landingLag: 7,
+  autoCancelStart: 0,
+  autoCancelEnd: 47,
 };
 
 let marthNeutralAirTwo = {
@@ -330,9 +341,19 @@ let marthNeutralAirTwo = {
   offsetY: -20,
   width: 150,
   height: 30,
-  startingFrames: 15,
+  startingFrames: 8,
   activeFrames: 6,
-
+  endingFrames: 28,
+  damage: 9.5,
+  angle: 361,
+  knockback: 60,
+  growthKnockback: 100,
+  shieldStun: 4,
+  transitionFrame: null,
+  autoTransition: false,
+  landingLag: 7,
+  autocancelstart: 0,
+  autoCancelEnd: 47,
 };
 
 let marthNeutralAir = [marthNeutralAirOne, marthNeutralAirTwo];
@@ -351,7 +372,7 @@ let marthForwardAir = {
   knockback: 40,
   growthKnockback: 80,
   shieldStun: 5,
-  transitionFrame: 0,
+  transitionFrame: null,
   autoTransition: false,
   landingLag: 10,
   autoCancelStart: 0,
@@ -377,7 +398,7 @@ let marthDownAir = {
   knockback: 40,
   growthKnockback: 80,
   shieldStun: 5,
-  transitionFrame: 0,
+  transitionFrame: null,
   autoTransition: false,
   landingLag: 14,
   autoCancelStart: 2,
@@ -398,7 +419,7 @@ let marthUpAir = {
   knockback: 40,
   growthKnockback: 84,
   shieldStun: 5,
-  transitionFrame: 0,
+  transitionFrame: null,
   autoTransition: false,
   landingLag: 8,
   autoCancelStart: 2,
@@ -420,7 +441,6 @@ class Player {
     this.rage = 1;
     this.currentAttack = null;
     this.hitboxes = [];
-    this.multihitHitboxes = null;
     this.multihitIndex = 0;
     this.spawnX = spawnX;
     this.spawnY = spawnY;
@@ -440,6 +460,7 @@ class Player {
     this.touchingLeft = false;
     this.touchingRight = false;
     this.touchingBottom = false;
+    this.multihitAir = false;
 
     // Timers
     this.jumpSquatTimer = JUMPSQUAT_TIMER;
@@ -449,7 +470,7 @@ class Player {
     this.angelPlatformTimer = ANGEL_PLATFORM_TIMER;
     this.attackFrameTimer = 0;
     this.hitstunTimer = 0;
-    this.multihitBuffer = 0;
+    this.multihitBuffer = false;
   }
 
   // Display the player and hitboxes
@@ -472,8 +493,8 @@ class Player {
     text(this.stats.name, this.position.x, this.position.y - 3 * this.stats.idleHeight / 4);
 
     // Draw hitboxes
-    for (let hitbox of this.hitboxes) {
-      hitbox.display();
+    if (this.currentAttack !== null) {
+      this.currentAttack.display();
     }
   }
 
@@ -545,7 +566,7 @@ class Player {
     if (this.state === "running" || this.state === "idle") {
       this.velocity.x = constrain(this.velocity.x, -this.stats.runSpeed, this.stats.runSpeed);
     }
-    if (this.state === "airborne" || this.state === "airAttacking") {
+    if (this.state === "airborne" || this.state === "airAttacking" || this.state === "multihitAttacking") {
       this.velocity.x = constrain(this.velocity.x, -this.stats.airSpeed, this.stats.airSpeed);
     }
   }
@@ -946,24 +967,36 @@ class Player {
       this.addFriction();
 
       // Control the hitboxes
-      for (let i = this.hitboxes.length - 1; i >= 0; i--) {
-
-        let hitbox = this.hitboxes[i];
-
+      if (this.currentAttack !== null) {
+        
         // Update the frame and position
-        hitbox.currentFrame++;
-        hitbox.update(this.position.x, this.position.y, this.direction);
-
+        this.currentAttack.currentFrame++;
+        this.currentAttack.update(this.position.x, this.position.y, this.direction);
+        
         // Remove hitboxes that have ended
-        if (hitbox.currentFrame > hitbox.totalFrames) {
-          this.hitboxes.splice(i, 1);
+        if (this.currentAttack.currentFrame > this.currentAttack.totalFrames) {
           this.currentAttack = null;
         }
       }
 
       // State triggers
-      if (this.hitboxes.length === 0) {
+      if (this.currentAttack === null) {
         this.state = "idle";
+      }
+
+      if (this.position.x > RIGHT_BLAST_ZONE || this.position.x < LEFT_BLAST_ZONE || this.position.y > BOTTOM_BLAST_ZONE || this.position.y < TOP_BLAST_ZONE) {
+        this.state = "dead";
+        if (this.stocks > 0) {
+          this.stocks--;
+
+          // Play death sound
+          if (this.stocks === 0) {
+            this.playSound("finalKo");
+          }
+          else {
+            this.playSound("ko");
+          }
+        }
       }
 
       if (this.hitstunTimer > 0) {
@@ -981,23 +1014,20 @@ class Player {
       this.addFriction();
 
       // Control the hitboxes
-      for (let i = this.hitboxes.length - 1; i >= 0; i--) {
-
-        let hitbox = this.hitboxes[i];
-
+      if (this.currentAttack !== null) {
+        
         // Update the frame and position
-        hitbox.currentFrame++;
-        hitbox.update(this.position.x, this.position.y, this.direction);
-
+        this.currentAttack.currentFrame++;
+        this.currentAttack.update(this.position.x, this.position.y, this.direction);
+        
         // Remove hitboxes that have ended
-        if (hitbox.currentFrame > hitbox.totalFrames) {
-          this.hitboxes.splice(i, 1);
+        if (this.currentAttack.currentFrame > this.currentAttack.totalFrames) {
           this.currentAttack = null;
         }
       }
 
       // State triggers
-      if (this.hitboxes.length === 0) {
+      if (this.currentAttack === null) {
         if (keyIsDown(this.controls.down)) {
           this.state = "crouching";
 
@@ -1006,6 +1036,21 @@ class Player {
           this.state = "idle";
           this.stats.currentHeight = this.stats.idleHeight;
           this.position.y -= this.stats.offsetCrouchHeight;
+        }
+      }
+
+      if (this.position.x > RIGHT_BLAST_ZONE || this.position.x < LEFT_BLAST_ZONE || this.position.y > BOTTOM_BLAST_ZONE || this.position.y < TOP_BLAST_ZONE) {
+        this.state = "dead";
+        if (this.stocks > 0) {
+          this.stocks--;
+
+          // Play death sound
+          if (this.stocks === 0) {
+            this.playSound("finalKo");
+          }
+          else {
+            this.playSound("ko");
+          }
         }
       }
 
@@ -1024,9 +1069,92 @@ class Player {
       this.airMovement();
       
       // Control the hitboxes
-      for (let i = this.hitboxes.length - 1; i >= 0; i--) {
+      if (this.currentAttack !== null) {
         
-        let hitbox = this.hitboxes[i];
+        // Update the frame and position
+        this.currentAttack.currentFrame++;
+        this.currentAttack.update(this.position.x, this.position.y, this.direction);
+        
+        // Remove hitboxes that have ended
+        if (this.currentAttack.currentFrame > this.currentAttack.totalFrames) {
+          this.currentAttack = null;
+        }
+      }
+      
+      // State triggers
+      
+      // If the opponent lands while air attacking
+      if (this.touchingTop) {
+        this.state = "landing";
+        
+        if (this.currentAttack !== null) {
+          let currentFrame = this.currentAttack.currentFrame;
+          let autoCancelStartingWindow = this.currentAttack.autoCancelStart;
+          let autoCancelEndingWindow = this.currentAttack.autoCancelEnd;
+          let landingLag = this.currentAttack.landingLag;
+          
+          // Remove the attack
+          this.currentAttack = null;
+          
+          // Reset velocity and snap to stage
+          this.velocity.y = 0;
+          this.position.y = STAGE_Y - this.stats.currentHeight / 2;
+          
+          
+          // Determine the endlag based on the current frame
+          if (currentFrame >= autoCancelEndingWindow) {
+            this.landingLagTimer = HARD_LANDING_LAG_TIMER;
+          }
+          else if (currentFrame <= autoCancelStartingWindow) {
+            this.landingLagTimer = HARD_LANDING_LAG_TIMER;
+          }
+          else {
+            this.landingLagTimer = landingLag;
+          }
+        }
+      }
+      
+      // If the opponent finishes the attack in the air
+      else if (this.currentAttack === null) {
+        this.state = "airborne";
+      }
+
+      if (this.position.x > RIGHT_BLAST_ZONE || this.position.x < LEFT_BLAST_ZONE || this.position.y > BOTTOM_BLAST_ZONE || this.position.y < TOP_BLAST_ZONE) {
+        this.state = "dead";
+        if (this.stocks > 0) {
+          this.stocks--;
+
+          // Play death sound
+          if (this.stocks === 0) {
+            this.playSound("finalKo");
+          }
+          else {
+            this.playSound("ko");
+          }
+        }
+      }
+      
+      if (this.hitstunTimer > 0) {
+        this.state = "hitstun";
+        this.hitboxes = [];
+        this.currentAttack = null;
+      }
+
+      break;
+
+    // multihitAttacking state behavior
+    case "multihitAttacking":
+
+      // State behavior
+      if (!this.multihitAir) {
+        this.addFriction();
+      }
+      else {
+        this.airMovement();
+      }
+
+      // Control the hitboxes
+      if (this.currentAttack !== null) {
         
         // Update the frame and position
         hitbox.currentFrame++;
@@ -1036,13 +1164,18 @@ class Player {
         if (hitbox.currentFrame > hitbox.totalFrames) {
           this.hitboxes.splice(i, 1);
           this.currentAttack = null;
-        }
+        } 
       }
-      
+
       // State triggers
-      
+
+      // Ground multihit
+      if (!this.multihitAir && this.currentAttack === null) {
+        this.state = "idle";
+      }
+
       // If the opponent lands while air attacking
-      if (this.touchingTop) {
+      else if (this.multihitAir && this.touchingTop) {
         this.state = "landing";
         
         if (this.currentAttack !== null) {
@@ -1074,25 +1207,30 @@ class Player {
       }
       
       // If the opponent finishes the attack in the air
-      else if (this.hitboxes.length === 0) {
+      else if (this.multihitAir && this.currentAttack === null) {
         this.state = "airborne";
-        
       }
-      
+
+      if (this.position.x > RIGHT_BLAST_ZONE || this.position.x < LEFT_BLAST_ZONE || this.position.y > BOTTOM_BLAST_ZONE || this.position.y < TOP_BLAST_ZONE) {
+        this.state = "dead";
+        if (this.stocks > 0) {
+          this.stocks--;
+
+          // Play death sound
+          if (this.stocks === 0) {
+            this.playSound("finalKo");
+          }
+          else {
+            this.playSound("ko");
+          }
+        }
+      }
+
       if (this.hitstunTimer > 0) {
         this.state = "hitstun";
         this.hitboxes = [];
         this.currentAttack = null;
       }
-
-      break;
-
-    // multihitAttacking state behavior
-    case "multihitAttacking":
-
-      // State behavior
-
-      // State triggers
 
       break;
 
@@ -1282,7 +1420,6 @@ class Player {
       attack.startingFrames, attack.activeFrames, attack.endingFrames, 
       attack.angle, attack.knockback, attack.growthKnockback, attack.shieldStun);
 
-    this.hitboxes.push(this.currentAttack);
     this.currentAttack.hasHit = false;
 
     // Change to proper attack state
@@ -1307,8 +1444,6 @@ class Player {
       attack.angle, attack.knockback, attack.growthKnockback, attack.shieldStun, 
       attack.transitionFrame, attack.autoTransition, attack.landingLag, 
       attack.autoCancelStart, attack.autoCancelEnd);
-
-    this.hitboxes.push(this.currentAttack);
     this.currentAttack.hasHit = false;
 
     // Change to proper attack state
@@ -1319,19 +1454,25 @@ class Player {
   }
 
   // Create a new multihit attack
-  spawnMultihit(attack) {
+  spawnMultihit(attackSequence, airborne) {
+
+    // Store the sequence
+    this.multihitIndex = 0;
+    this.hitboxes = attackSequence;
+    this.multihitBuffer = false;
 
     // Make the players current attack a new instance
-    this.currentAttack = new Attack(this.direction, this.position.x, this.position.y, attack.offsetX, 
-      attack.offsetY, attack.width, attack.height, attack.damage, 
-      attack.startingFrames, attack.activeFrames, attack.endingFrames, 
-      attack.angle, attack.knockback, attack.growthKnockback, attack.shieldStun, 
-      attack.transitionFrame, attack.autoTransition);
+    this.currentAttack = new Attack(this.direction, this.position.x, this.position.y, attackSequence[0].offsetX, 
+      attackSequence[0].offsetY, attackSequence[0].width, attackSequence[0].height, attackSequence[0].damage, 
+      attackSequence[0].startingFrames, attackSequence[0].activeFrames, attackSequence[0].endingFrames, 
+      attackSequence[0].angle, attackSequence[0].knockback, attackSequence[0].growthKnockback, attackSequence[0].shieldStun, 
+      attackSequence[0].transitionFrame, attackSequence[0].autoTransition);
 
-    this.multihitHitboxes.push(this.currentAttack);
+    this.hitboxes.push(this.currentAttack);
     this.currentAttack.hasHit = false;
 
     // Change to proper attack state
+    this.multihitAir = airborne;
     this.state = "multihitAttacking";
     
     // Play sound
@@ -1350,6 +1491,10 @@ class Player {
     this.fastFalling = false;
     this.invincible = true;
     this.stats.currentHeight = this.stats.idleHeight;
+    this.multiHitBuffer = false;
+    this.multiHitSequence = null;
+    this.multiHitIndex = 0;
+
 
     // Reset timers
     this.invincibilityTimer = INVINCIBILITY_TIMER;
