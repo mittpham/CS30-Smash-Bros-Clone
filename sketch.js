@@ -21,6 +21,7 @@
 // https://www.youtube.com/playlist?list=PLf9yt-2olqyLxr-vouWl-qk4toUfjF2LC - street fighter clone
 // https://www.reddit.com/r/smashbros/comments/1h78zyq/how_does_an_attacks_frames_on_shield_and_ending/ - how end lag works with frames
 // https://www.youtube.com/watch?v=ht3bZcLxBlQ - smash mechanics explanation
+// https://www.reddit.com/r/smashbros/comments/ah7obo/how_ultimates_buffer_works_full_explanation/ - how buffering works
 
 // In game:
 // https://www.spriters-resource.com/custom_edited/supersmashbroscustoms/asset/62979/ - stage
@@ -69,6 +70,7 @@ const LOW_KNOCKBACK_THRESHOLD = 66;
 const HIGH_KNOCKBACK_THRESHOLD = 88;
 const R_KEY = 82;
 const PLAYER_TEXT_SIZE = 20;
+const BUFFER_WINDOW = 9;
 
 let winner = null;
 
@@ -352,7 +354,7 @@ let marthNeutralAirTwo = {
   transitionFrame: null,
   autoTransition: false,
   landingLag: 7,
-  autocancelstart: 0,
+  autoCancelStart: 0,
   autoCancelEnd: 47,
 };
 
@@ -381,7 +383,23 @@ let marthForwardAir = {
 
 // Back air
 let marthBackAir = {
-  
+  offsetX: 0,
+  offsetY: 0,
+  width: 100,
+  height: 100,
+  startingFrames: 7,
+  activeFrames: 4,
+  endingFrames: 28,
+  damage: 12.5,
+  angle: 361,
+  knockback: 40,
+  growthKnockback: 94,
+  shieldStun: 5,
+  transitionFrame: null,
+  autoTransition: false,
+  landingLag: 10,
+  autoCancelStart: 2,
+  autoCancelEnd: 32,
 };
 
 // Down air
@@ -470,7 +488,7 @@ class Player {
     this.angelPlatformTimer = ANGEL_PLATFORM_TIMER;
     this.attackFrameTimer = 0;
     this.hitstunTimer = 0;
-    this.multihitBuffer = false;
+    this.multihitBuffer = 0;
   }
 
   // Display the player and hitboxes
@@ -1157,12 +1175,27 @@ class Player {
       if (this.currentAttack !== null) {
         
         // Update the frame and position
-        hitbox.currentFrame++;
-        hitbox.update(this.position.x, this.position.y, this.direction);
+        this.currentAttack.currentFrame++;
+        this.currentAttack.update(this.position.x, this.position.y, this.direction);
+
+        // Transition to next attack if buffered and transitionable
+        if (this.currentAttack.currentFrame >= this.currentAttack.transitionFrame) {
+          if (this.currentAttack.transitionFrame - this.multihitBuffer <= BUFFER_WINDOW) {
+
+            this.multihitIndex++;
+            let attack = this.hitboxes[this.multihitIndex];
+
+            this.currentAttack = new Attack(this.direction, this.position.x, this.position.y, attack.offsetX, 
+              attack.offsetY, attack.width, attack.height, attack.damage, 
+              attack.startingFrames, attack.activeFrames, attack.endingFrames, 
+              attack.angle, attack.knockback, attack.growthKnockback, attack.shieldStun, 
+              attack.transitionFrame, attack.autoTransition);
+          }
+        }
         
         // Remove hitboxes that have ended
-        if (hitbox.currentFrame > hitbox.totalFrames) {
-          this.hitboxes.splice(i, 1);
+        if (this.currentAttack.currentFrame > this.currentAttack.totalFrames) {
+          this.hitboxes = [];
           this.currentAttack = null;
         } 
       }
@@ -1459,7 +1492,7 @@ class Player {
     // Store the sequence
     this.multihitIndex = 0;
     this.hitboxes = attackSequence;
-    this.multihitBuffer = false;
+    this.multihitBuffer = 0;
 
     // Make the players current attack a new instance
     this.currentAttack = new Attack(this.direction, this.position.x, this.position.y, attackSequence[0].offsetX, 
@@ -1491,7 +1524,7 @@ class Player {
     this.fastFalling = false;
     this.invincible = true;
     this.stats.currentHeight = this.stats.idleHeight;
-    this.multiHitBuffer = false;
+    this.multiHitBuffer = 0;
     this.multiHitSequence = null;
     this.multiHitIndex = 0;
 
@@ -1970,7 +2003,10 @@ function keyPressed() {
   
           // Default attack
           else {
-            playerOne.spawnGroundHitbox(marthForwardTilt, false);
+            playerOne.spawnMultihit(marthJab, false);
+            if (keyIsDown(playerOne.controls.attack)) {
+              playerOne.multihitBuffer = playerOne.currentAttack.currentFrame;
+            }
           }
         }
   
