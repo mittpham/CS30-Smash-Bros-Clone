@@ -41,7 +41,7 @@
 
 // Things to do:
 // jumping into top blastzone should not kill
-// Create multihit attacks jab, nair, sideb
+// Fix multihits to reset
 // Add controls
 // 1. fix moving after hitstun
 // 2. add sounds kill sound, marth voice
@@ -118,7 +118,7 @@ let playerTwoControls = {
 const STAGE_X = 320;
 const STAGE_Y = 550;
 const STAGE_WIDTH = 800;
-const STAGE_HEIGHT = 50;
+const STAGE_HEIGHT = 300;
 
 const TOP_BLAST_ZONE = -25;
 const BOTTOM_BLAST_ZONE = 835;
@@ -150,6 +150,10 @@ let countdownAnnouncer;
 let marthWin;
 let gameEndMusic;
 let gameAnnouncer;
+
+// Sprites and images
+let stageSprite;
+let stageBackground;
 
 // Player one
 let marthAppearOne;
@@ -385,7 +389,7 @@ let marthForwardAir = {
 let marthBackAir = {
   offsetX: 0,
   offsetY: 0,
-  width: 100,
+  width: -100,
   height: 100,
   startingFrames: 7,
   activeFrames: 4,
@@ -479,6 +483,7 @@ class Player {
     this.touchingRight = false;
     this.touchingBottom = false;
     this.multihitAir = false;
+    this.transitionWindowOpen = false;
 
     // Timers
     this.jumpSquatTimer = JUMPSQUAT_TIMER;
@@ -1178,19 +1183,28 @@ class Player {
         this.currentAttack.currentFrame++;
         this.currentAttack.update(this.position.x, this.position.y, this.direction);
 
-        // Transition to next attack if buffered and transitionable
+        // Open up window to transition into the next attack
         if (this.currentAttack.currentFrame >= this.currentAttack.transitionFrame) {
-          if (this.currentAttack.currentFrame - this.multihitBuffer <= BUFFER_WINDOW) {
+          this.transitionWindowOpen = true;
+        }
 
-            this.multihitIndex++;
-            let attack = this.hitboxes[this.multihitIndex];
+        // Transition to new attack if possible and within buffer window
+        if (this.currentAttack.currentFrame - this.multihitBuffer <= BUFFER_WINDOW && this.transitionWindowOpen && this.multihitIndex < this.hitboxes.length - 1) {
 
-            this.currentAttack = new Attack(this.direction, this.position.x, this.position.y, attack.offsetX, 
-              attack.offsetY, attack.width, attack.height, attack.damage, 
-              attack.startingFrames, attack.activeFrames, attack.endingFrames, 
-              attack.angle, attack.knockback, attack.growthKnockback, attack.shieldStun, 
-              attack.transitionFrame, attack.autoTransition);
-          }
+          // Update attack index
+          this.transitionWindowOpen = false;
+          this.multihitIndex++;
+          let attack = this.hitboxes[this.multihitIndex];
+
+          // New attack
+          this.currentAttack = new Attack(this.direction, this.position.x, this.position.y, attack.offsetX, 
+            attack.offsetY, attack.width, attack.height, attack.damage, 
+            attack.startingFrames, attack.activeFrames, attack.endingFrames, 
+            attack.angle, attack.knockback, attack.growthKnockback, attack.shieldStun, 
+            attack.transitionFrame, attack.autoTransition);
+
+          // Play sound
+          this.playSound("swing");
         }
         
         // Remove hitboxes that have ended
@@ -1205,6 +1219,8 @@ class Player {
       // Ground multihit
       if (!this.multihitAir && this.currentAttack === null) {
         this.state = "idle";
+        this.hitboxes = [];
+        this.currentAttack = null;
       }
 
       // If the opponent lands while air attacking
@@ -1527,6 +1543,7 @@ class Player {
     this.multihitIndex = 0;
     this.currentAttack = null;
     this.multihitAir = false;
+    this.transitionWindowOpen = false;
 
     // Reset timers
     this.invincibilityTimer = INVINCIBILITY_TIMER;
@@ -1749,6 +1766,14 @@ class Stage {
     this.w = stageW;
     this.h = stageH;
     this.blastzone = blastzoneGap;
+
+    // Animation properties
+    this.frameWidth = 454;
+    this.frameHeight = 237;
+    this.currentFrame = 0;
+    this.totalFrames = 7;
+    this.animationTimer = 0;
+    this.animationSpeed = 10;
   }
 
   // Show the stage
@@ -1759,11 +1784,25 @@ class Stage {
 
     // Show the players percent
     this.displayDamageMeter(playerOne, playerTwo);
+
+    // Show the stage
+    image(stageSprite, this.x, this.y, this.w, this.h, 0, 0, 454, 237); 
   }
 
   // Go through animation frames
   update() {
-    // Nice to have stuff
+    
+    // Count timer to update frames
+    this.animationTimer++;
+    if (this.animationTimer > this.animationSpeed) {
+      this.currentFrame++;
+      this.animationTimer = 0;
+    }
+
+    // Loop back to first frame
+    if (this.currentFrame > this.totalFrames) {
+      this.currentFrame = 0;
+    }
   }
 
   // Show how many lives each player has
@@ -1834,6 +1873,10 @@ function preload() {
   marthRiseTwo = loadSound("assets/marth/sounds/marthrise.mp3");
   koTwo = loadSound("assets/marth/sounds/ko.mp3");
   finalKoTwo = loadSound("assets/marth/sounds/finalKo.mp3");
+
+  // Stage images
+  stageSprite = loadImage("assets/stage/stagesprite.png");
+  stageBackground = loadImage("assets/stage/stagebackground.jpg");
 }
 
 // Setup player
@@ -2040,7 +2083,7 @@ function keyPressed() {
 
           // Default attack
           else {
-            playerOne.spawnAirHitbox(marthForwardAir);
+            playerOne.spawnMultihit(marthNeutralAir, true);
           }
         }
 
@@ -2126,7 +2169,12 @@ function keyPressed() {
 
           // Attacking forward
           if (keyIsDown(playerTwo.controls.left) || keyIsDown(playerTwo.controls.right)) {
-            playerTwo.spawnAirHitbox(marthForwardAir);
+            if (keyIsDown(playerTwo.controls.left) !== playerTwo.direction) {
+              playerTwo.spawnAirHitbox(marthForwardAir);
+            }
+            else {
+              playerTwo.spawnAirHitbox(marthBackAir);
+            }
           }
 
           // Attacking down
@@ -2141,7 +2189,7 @@ function keyPressed() {
 
           // Default attack
           else {
-            playerTwo.spawnAirHitbox(marthForwardAir);
+            playerTwo.spawnMultihit(marthNeutralAir, true);
           }
         }
         
