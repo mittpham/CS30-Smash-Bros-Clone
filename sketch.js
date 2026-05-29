@@ -1180,7 +1180,7 @@ class Player {
 
         // Transition to next attack if buffered and transitionable
         if (this.currentAttack.currentFrame >= this.currentAttack.transitionFrame) {
-          if (this.currentAttack.transitionFrame - this.multihitBuffer <= BUFFER_WINDOW) {
+          if (this.currentAttack.currentFrame - this.multihitBuffer <= BUFFER_WINDOW) {
 
             this.multihitIndex++;
             let attack = this.hitboxes[this.multihitIndex];
@@ -1500,8 +1500,6 @@ class Player {
       attackSequence[0].startingFrames, attackSequence[0].activeFrames, attackSequence[0].endingFrames, 
       attackSequence[0].angle, attackSequence[0].knockback, attackSequence[0].growthKnockback, attackSequence[0].shieldStun, 
       attackSequence[0].transitionFrame, attackSequence[0].autoTransition);
-
-    this.hitboxes.push(this.currentAttack);
     this.currentAttack.hasHit = false;
 
     // Change to proper attack state
@@ -1524,10 +1522,11 @@ class Player {
     this.fastFalling = false;
     this.invincible = true;
     this.stats.currentHeight = this.stats.idleHeight;
-    this.multiHitBuffer = 0;
-    this.multiHitSequence = null;
-    this.multiHitIndex = 0;
-
+    this.multihitBuffer = 0;
+    this.hitboxes = [];
+    this.multihitIndex = 0;
+    this.currentAttack = null;
+    this.multihitAir = false;
 
     // Reset timers
     this.invincibilityTimer = INVINCIBILITY_TIMER;
@@ -2004,9 +2003,6 @@ function keyPressed() {
           // Default attack
           else {
             playerOne.spawnMultihit(marthJab, false);
-            if (keyIsDown(playerOne.controls.attack)) {
-              playerOne.multihitBuffer = playerOne.currentAttack.currentFrame;
-            }
           }
         }
   
@@ -2046,6 +2042,11 @@ function keyPressed() {
           else {
             playerOne.spawnAirHitbox(marthForwardAir);
           }
+        }
+
+        // Attacks from multihitAttacking state
+        else if (playerOne.state === "multihitAttacking") {
+          playerOne.multihitBuffer = playerOne.currentAttack.currentFrame;
         }
       }
     }
@@ -2102,7 +2103,7 @@ function keyPressed() {
   
           // Default attack
           else {
-            playerTwo.spawnGroundHitbox(marthForwardTilt, false);
+            playerTwo.spawnMultihit(marthJab, false);
           }
         }
   
@@ -2142,6 +2143,11 @@ function keyPressed() {
           else {
             playerTwo.spawnAirHitbox(marthForwardAir);
           }
+        }
+        
+        // Attacks from multihitAttacking state
+        else if (playerTwo.state === "multihitAttacking") {
+          playerTwo.multihitBuffer = playerTwo.currentAttack.currentFrame;
         }
       }
     }
@@ -2348,4 +2354,4 @@ function displayWinner(winner) {
     text(`Player 2 wins!
     Press R to play again`, width / 2, height / 2);
   }
-};
+}
