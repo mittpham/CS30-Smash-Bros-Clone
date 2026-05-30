@@ -1848,7 +1848,6 @@ class Stage {
 
   // Go through animation frames
   update() {
-
     
     // Count timer to update frames
     this.animationTimer++;
@@ -1993,20 +1992,24 @@ function setup() {
 
 // Manage players
 function draw() {
-  background(0);
-
+  
   // menu state
   if (gameState === "menu") {
+    background(0);
     displayMenu();
   }
 
   // controls state
   else if (gameState === "controls") {
+    background(0);
     displayControls();
   }
 
   // starting state
   else if (gameState === "starting") {
+
+    // Display background
+    image(stageBackground, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 
     // Show countdown
     countDown();
@@ -2014,6 +2017,10 @@ function draw() {
 
   // playing state
   else if (gameState === "playing") {
+
+    // Display background
+    image(stageBackground, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+
     noStroke();
   
     // Draw stage
@@ -2037,6 +2044,7 @@ function draw() {
 
   // gameOver state
   else if (gameState === "gameOver") {
+    background(0);
     displayWinner(winner);
     backgroundMusic.stop();
     if (!gameEndMusic.isPlaying()) {
