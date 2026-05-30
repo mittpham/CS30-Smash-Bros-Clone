@@ -118,7 +118,7 @@ let playerTwoControls = {
 const STAGE_X = 320;
 const STAGE_Y = 550;
 const STAGE_WIDTH = 800;
-const STAGE_HEIGHT = 300;
+const STAGE_HEIGHT = 50;
 
 const TOP_BLAST_ZONE = -25;
 const BOTTOM_BLAST_ZONE = 835;
@@ -324,7 +324,7 @@ let marthUpTilt = {
 // Neutral air
 let marthNeutralAirOne = {
   offsetX: 20,
-  offsetY: -20,
+  offsetY: 0,
   width: 100,
   height: 30,
   startingFrames: 6,
@@ -344,7 +344,7 @@ let marthNeutralAirOne = {
 
 let marthNeutralAirTwo = {
   offsetX: 0,
-  offsetY: -20,
+  offsetY: 0,
   width: 150,
   height: 30,
   startingFrames: 8,
@@ -387,9 +387,9 @@ let marthForwardAir = {
 
 // Back air
 let marthBackAir = {
-  offsetX: 0,
+  offsetX: -40,
   offsetY: 0,
-  width: -100,
+  width: 100,
   height: 100,
   startingFrames: 7,
   activeFrames: 4,
@@ -753,6 +753,8 @@ class Player {
         this.state = "hitstun";
         this.hitboxes = [];
         this.currentAttack = null;
+        this.transitionWindowOpen = false;
+        this.multihitBuffer = 0;
       }
 
       break;
@@ -813,6 +815,8 @@ class Player {
         this.state = "hitstun";
         this.hitboxes = [];
         this.currentAttack = null;
+        this.transitionWindowOpen = false;
+        this.multihitBuffer = 0;
       }
 
       break;
@@ -845,6 +849,8 @@ class Player {
         this.state = "hitstun";
         this.hitboxes = [];
         this.currentAttack = null;
+        this.transitionWindowOpen = false;
+        this.multihitBuffer = 0;
       }
 
       break;
@@ -894,6 +900,8 @@ class Player {
         this.state = "hitstun";
         this.hitboxes = [];
         this.currentAttack = null;
+        this.transitionWindowOpen = false;
+        this.multihitBuffer = 0;
       }
 
       break;
@@ -929,6 +937,8 @@ class Player {
         this.state = "hitstun";
         this.hitboxes = [];
         this.currentAttack = null;
+        this.transitionWindowOpen = false;
+        this.multihitBuffer = 0;
       }
 
       break;
@@ -979,6 +989,8 @@ class Player {
         this.state = "hitstun";
         this.hitboxes = [];
         this.currentAttack = null;
+        this.transitionWindowOpen = false;
+        this.multihitBuffer = 0;
       }
 
       break;
@@ -1026,6 +1038,8 @@ class Player {
         this.state = "hitstun";
         this.hitboxes = [];
         this.currentAttack = null;
+        this.transitionWindowOpen = false;
+        this.multihitBuffer = 0;
       }
       
       break;
@@ -1081,6 +1095,8 @@ class Player {
         this.state = "hitstun";
         this.hitboxes = [];
         this.currentAttack = null;
+        this.transitionWindowOpen = false;
+        this.multihitBuffer = 0;
       }
       
       break;
@@ -1161,6 +1177,8 @@ class Player {
         this.state = "hitstun";
         this.hitboxes = [];
         this.currentAttack = null;
+        this.transitionWindowOpen = false;
+        this.multihitBuffer = 0;
       }
 
       break;
@@ -1189,22 +1207,49 @@ class Player {
         }
 
         // Transition to new attack if possible and within buffer window
-        if (this.currentAttack.currentFrame - this.multihitBuffer <= BUFFER_WINDOW && this.transitionWindowOpen && this.multihitIndex < this.hitboxes.length - 1) {
+        if (this.transitionWindowOpen && this.multihitIndex < this.hitboxes.length - 1) {
 
           // Update attack index
-          this.transitionWindowOpen = false;
           this.multihitIndex++;
           let attack = this.hitboxes[this.multihitIndex];
+          
+          // Automatic multihits (neutral air only)
+          if (this.currentAttack.autoTransition) {
 
-          // New attack
-          this.currentAttack = new Attack(this.direction, this.position.x, this.position.y, attack.offsetX, 
-            attack.offsetY, attack.width, attack.height, attack.damage, 
-            attack.startingFrames, attack.activeFrames, attack.endingFrames, 
-            attack.angle, attack.knockback, attack.growthKnockback, attack.shieldStun, 
-            attack.transitionFrame, attack.autoTransition);
+            // Close the window to change moves
+            this.transitionWindowOpen = false;
+            this.multihitBuffer = 0;
+  
+            // New attack
+            this.currentAttack = new Attack(this.direction, this.position.x, this.position.y, attack.offsetX, 
+              attack.offsetY, attack.width, attack.height, attack.damage, 
+              attack.startingFrames, attack.activeFrames, attack.endingFrames, 
+              attack.angle, attack.knockback, attack.growthKnockback, attack.shieldStun, 
+              attack.transitionFrame, attack.autoTransition);
+            this.currentAttack.hasHit = false;
+  
+            // Play sound
+            this.playSound("swing");
+          }
 
-          // Play sound
-          this.playSound("swing");
+          // Manual multihits (side special and jab)
+          else if (this.currentAttack.currentFrame - this.multihitBuffer <= BUFFER_WINDOW && this.multihitBuffer > 0) {
+
+            // Close the window to change moves
+            this.transitionWindowOpen = false;
+            this.multihitBuffer = 0;
+  
+            // New attack
+            this.currentAttack = new Attack(this.direction, this.position.x, this.position.y, attack.offsetX, 
+              attack.offsetY, attack.width, attack.height, attack.damage, 
+              attack.startingFrames, attack.activeFrames, attack.endingFrames, 
+              attack.angle, attack.knockback, attack.growthKnockback, attack.shieldStun, 
+              attack.transitionFrame, attack.autoTransition);
+            this.currentAttack.hasHit = false;
+  
+            // Play sound
+            this.playSound("swing");
+          }
         }
         
         // Remove hitboxes that have ended
@@ -1279,6 +1324,8 @@ class Player {
         this.state = "hitstun";
         this.hitboxes = [];
         this.currentAttack = null;
+        this.transitionWindowOpen = false;
+        this.multihitBuffer = 0;
       }
 
       break;
@@ -1760,37 +1807,48 @@ class Attack {
 class Stage {
   constructor(stageX, stageY, stageW, stageH, blastzoneGap) {
 
-    // Stage properties
+    // Physical stage properties
     this.x = stageX;
     this.y = stageY;
     this.w = stageW;
     this.h = stageH;
     this.blastzone = blastzoneGap;
 
+    // Animation stage properties
+    this.animationHeight = 300;
+    this.animationY = 515;
+
     // Animation properties
-    this.frameWidth = 454;
+    this.frameWidth = 456;
     this.frameHeight = 237;
     this.currentFrame = 0;
-    this.totalFrames = 7;
+    this.totalFrames = 6;
     this.animationTimer = 0;
-    this.animationSpeed = 10;
+    this.animationSpeed = 5;
   }
 
   // Show the stage
   display(playerOne, playerTwo) {
-    rectMode(CORNER);
-    fill("white");
-    rect(this.x, this.y, this.w, this.h);
+
+    // Hitbox
+    // rectMode(CORNER);
+    // fill("white");
+    // rect(this.x, this.y, this.w, this.h);
+
+    // Shuffle through frames
+    let frameX = this.currentFrame * this.frameWidth;
 
     // Show the players percent
     this.displayDamageMeter(playerOne, playerTwo);
 
     // Show the stage
-    image(stageSprite, this.x, this.y, this.w, this.h, 0, 0, 454, 237); 
+    image(stageSprite, this.x, this.animationY, this.w, this.animationHeight, 
+      frameX, 0, this.frameWidth, this.frameHeight); 
   }
 
   // Go through animation frames
   update() {
+
     
     // Count timer to update frames
     this.animationTimer++;
@@ -2067,8 +2125,15 @@ function keyPressed() {
         else if (playerOne.state === "airborne") {
 
           // Attacking forward
-          if (keyIsDown(playerOne.controls.left) || keyIsDown(playerOne.controls.right)) {
+          if (keyIsDown(playerOne.controls.left) && !playerOne.direction || 
+          keyIsDown(playerOne.controls.right) && playerOne.direction) {
             playerOne.spawnAirHitbox(marthForwardAir);
+          }
+
+          // Attacking backward
+          else if (keyIsDown(playerOne.controls.left) && playerOne.direction ||
+          keyIsDown(playerOne.controls.right) && !playerOne.direction) {
+            playerOne.spawnAirHitbox(marthBackAir);
           }
 
           // Attacking down
@@ -2168,13 +2233,15 @@ function keyPressed() {
         else if (playerTwo.state === "airborne") {
 
           // Attacking forward
-          if (keyIsDown(playerTwo.controls.left) || keyIsDown(playerTwo.controls.right)) {
-            if (keyIsDown(playerTwo.controls.left) !== playerTwo.direction) {
-              playerTwo.spawnAirHitbox(marthForwardAir);
-            }
-            else {
-              playerTwo.spawnAirHitbox(marthBackAir);
-            }
+          if (keyIsDown(playerTwo.controls.left) && !playerTwo.direction || 
+          keyIsDown(playerTwo.controls.right) && playerTwo.direction) {
+            playerTwo.spawnAirHitbox(marthForwardAir);
+          }
+
+          // Attacking backward
+          else if (keyIsDown(playerTwo.controls.left) && playerTwo.direction ||
+          keyIsDown(playerTwo.controls.right) && !playerTwo.direction) {
+            playerTwo.spawnAirHitbox(marthBackAir);
           }
 
           // Attacking down
