@@ -40,7 +40,6 @@
 // https://www.spriters-resource.com/custom_edited/supersmashbroscustoms/asset/196310/ - marth portrait
 
 // Things to do:
-// jumping into top blastzone should not kill
 // Fix multihits to reset
 // Add controls
 // 1. fix moving after hitstun
@@ -154,6 +153,7 @@ let gameAnnouncer;
 // Sprites and images
 let stageSprite;
 let stageBackground;
+let marthIdle;
 
 // Player one
 let marthAppearOne;
@@ -395,7 +395,7 @@ let marthBackAir = {
   activeFrames: 4,
   endingFrames: 28,
   damage: 12.5,
-  angle: 361,
+  angle: -135,
   knockback: 40,
   growthKnockback: 94,
   shieldStun: 5,
@@ -494,6 +494,15 @@ class Player {
     this.attackFrameTimer = 0;
     this.hitstunTimer = 0;
     this.multihitBuffer = 0;
+
+    // Animation properties
+    this.frameWidth = 48;
+    this.frameHeight = 62;
+    this.currentFrame = 0;
+    this.totalFrames = 6;
+    this.animationTimer = 0;
+    this.animationSpeed = 5;
+    this.currentAnimation = "idle";
   }
 
   // Display the player and hitboxes
@@ -507,6 +516,11 @@ class Player {
     fill(this.stats.color);
     rect(this.position.x, this.position.y, this.stats.width, this.stats.currentHeight);
 
+    // Draw hitboxes
+    if (this.currentAttack !== null) {
+      this.currentAttack.display();
+    }
+
     // Marker to show player
     fill("white");
     stroke("black");
@@ -514,15 +528,13 @@ class Player {
     textAlign(CENTER, CENTER);
     textSize(PLAYER_TEXT_SIZE);
     text(this.stats.name, this.position.x, this.position.y - 3 * this.stats.idleHeight / 4);
-
-    // Draw hitboxes
-    if (this.currentAttack !== null) {
-      this.currentAttack.display();
-    }
   }
 
   // Update the player’s state and movement
   update(player) {
+
+    // Animation marth
+    this.updateAnimation();
 
     // Count down invincibility from angel platform
     this.countInvincibility();
@@ -541,6 +553,22 @@ class Player {
 
     // Check for collisions between hitboxes and hurtboxes of player
     this.checkAttackCollision(player);
+  }
+
+  // Update and control the animations for marth
+  updateAnimation() {
+
+    // Count timer to update frames
+    this.animationTimer++;
+    if (this.animationTimer > this.animationSpeed) {
+      this.currentFrame++;
+      this.animationTimer = 0;
+    }
+
+    // Loop back to first frame
+    if (this.currentFrame > this.totalFrames) {
+      this.currentFrame = 0;
+    }
   }
 
   // Count down timer for 5 seconds from spawning before removing i-frames
@@ -1208,14 +1236,14 @@ class Player {
 
         // Transition to new attack if possible and within buffer window
         if (this.transitionWindowOpen && this.multihitIndex < this.hitboxes.length - 1) {
-
-          // Update attack index
-          this.multihitIndex++;
-          let attack = this.hitboxes[this.multihitIndex];
           
           // Automatic multihits (neutral air only)
           if (this.currentAttack.autoTransition) {
-
+            
+            // Update attack index
+            this.multihitIndex++;
+            let attack = this.hitboxes[this.multihitIndex];
+            
             // Close the window to change moves
             this.transitionWindowOpen = false;
             this.multihitBuffer = 0;
@@ -1234,6 +1262,10 @@ class Player {
 
           // Manual multihits (side special and jab)
           else if (this.currentAttack.currentFrame - this.multihitBuffer <= BUFFER_WINDOW && this.multihitBuffer > 0) {
+
+            // Update attack index
+            this.multihitIndex++;
+            let attack = this.hitboxes[this.multihitIndex];
 
             // Close the window to change moves
             this.transitionWindowOpen = false;
@@ -1837,13 +1869,13 @@ class Stage {
 
     // Shuffle through frames
     let frameX = this.currentFrame * this.frameWidth;
-
-    // Show the players percent
-    this.displayDamageMeter(playerOne, playerTwo);
-
+    
     // Show the stage
     image(stageSprite, this.x, this.animationY, this.w, this.animationHeight, 
       frameX, 0, this.frameWidth, this.frameHeight); 
+    
+    // Show the players percent
+    this.displayDamageMeter(playerOne, playerTwo);
   }
 
   // Go through animation frames
@@ -1931,9 +1963,12 @@ function preload() {
   koTwo = loadSound("assets/marth/sounds/ko.mp3");
   finalKoTwo = loadSound("assets/marth/sounds/finalKo.mp3");
 
-  // Stage images
+  // Stage sprites
   stageSprite = loadImage("assets/stage/stagesprite.png");
   stageBackground = loadImage("assets/stage/stagebackground.jpg");
+
+  // Marth sprites
+  marthIdle = loadImage("assets/marth/animations/idlesprite.png");
 }
 
 // Setup player
