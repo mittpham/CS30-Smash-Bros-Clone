@@ -153,7 +153,7 @@ let gameAnnouncer;
 // Sprites and images
 let stageSprite;
 let stageBackground;
-let marthIdle;
+let marthSheet;
 
 // Player one
 let marthAppearOne;
@@ -251,7 +251,7 @@ let marthJabOne = {
   growthKnockback: 12,
   shieldStun: 6,
   transitionFrame: 11,
-  autoTransition: true,
+  autoTransition: false,
 };
 
 let marthJabTwo = {
@@ -450,7 +450,7 @@ let marthUpAir = {
 
 // Create the base player
 class Player {
-  constructor(x, y, stats, controls, sounds, spawnX, spawnY) {
+  constructor(x, y, stats, controls, sounds, spawnX, spawnY, direction) {
 
     // Physics and stats
     this.controls = controls;
@@ -472,7 +472,7 @@ class Player {
     this.state = "idle"; // idle, running, crouching, airborne, jumpsquat, landing, dead, spawning, attacking, crouchAttacking, airAttacking, multihitAttacking, hitstun
 
     // Flags/Conditions
-    this.direction = true; // Right
+    this.direction = direction;
     this.jumpSquatting = false;
     this.jumpAvailable = true;
     this.doubleJumpAvailable = false;
@@ -496,13 +496,22 @@ class Player {
     this.multihitBuffer = 0;
 
     // Animation properties
-    this.frameWidth = 48;
-    this.frameHeight = 62;
     this.currentFrame = 0;
-    this.totalFrames = 6;
-    this.animationTimer = 0;
-    this.animationSpeed = 5;
     this.currentAnimation = "idle";
+    this.animationTimer = 0;
+    this.animationSpeed = 30;
+    this.animationDirection = null;
+    this.animations = new Map();
+
+    // Setting the animations
+    this.animations.set("idle", [
+      [[51, 155, 38, 60], [68, 215]],
+      [[99, 154, 38, 61], [115, 215]],
+      [[147, 153, 39, 62], [164, 215]],
+      [[195, 153, 39, 62], [212, 215]],
+      [[243, 153, 39, 62], [260, 215]],
+      [[291, 154, 38, 61], [308, 215]]
+    ]);
   }
 
   // Display the player and hitboxes
@@ -520,6 +529,40 @@ class Player {
     if (this.currentAttack !== null) {
       this.currentAttack.display();
     }
+
+    // Pull the current animation as well as the current frame
+    let currentAnimationData = this.animations.get(this.currentAnimation);
+    let framePoints = currentAnimationData[this.currentFrame];
+
+    let croppedPoints = framePoints[0];
+    let originPoints = framePoints[1];
+
+    let croppedX = croppedPoints[0];
+    let croppedY = croppedPoints[1];
+    let croppedW = croppedPoints[2];
+    let croppedH = croppedPoints[3];
+
+    let originX = originPoints[0];
+    let originY = originPoints[1];
+    let offsetX = originX - croppedX;
+    let offsetY = originY - croppedY;
+
+    // Choose the direction
+    if (this.direction) {
+      this.animationDirection = 1;
+    }
+    else {
+      this.animationDirection = -1;
+    }
+    scale(this.animationDirection, 1);
+
+    // Draw the frame
+    imageMode(CORNER);
+    image(marthSheet, 
+      this.position.x - offsetX, this.position.y + this.stats.currentHeight / 2 - offsetY, 
+      croppedW, croppedH, 
+      croppedX, croppedY, 
+      croppedW, croppedH);
 
     // Marker to show player
     fill("white");
@@ -558,15 +601,28 @@ class Player {
   // Update and control the animations for marth
   updateAnimation() {
 
+    // // Reset animations if they change
+    // if (this.currentAnimation !== newAnimation) {
+    //   this.currentAnimation = newAnimation;
+    //   this.currentFrame = 0;
+    // }
+
+    // Manage animations
+    if (this.state === "idle") {
+      this.currentAnimation = "idle";
+    }
+
     // Count timer to update frames
     this.animationTimer++;
-    if (this.animationTimer > this.animationSpeed) {
+    let totalFrames = this.animations.get(this.currentAnimation).length;
+
+    if (this.animationTimer >= this.animationSpeed) {
       this.currentFrame++;
       this.animationTimer = 0;
     }
 
     // Loop back to first frame
-    if (this.currentFrame > this.totalFrames) {
+    if (this.currentFrame >= totalFrames) {
       this.currentFrame = 0;
     }
   }
@@ -1968,7 +2024,7 @@ function preload() {
   stageBackground = loadImage("assets/stage/stagebackground.jpg");
 
   // Marth sprites
-  marthIdle = loadImage("assets/marth/animations/idlesprite.png");
+  marthSheet = loadImage("assets/marth/animations/marthsprite.png");
 }
 
 // Setup player
@@ -2015,11 +2071,11 @@ function setup() {
 
   // Create player 1
   playerOne = new Player(PLAYER_ONE_START_X, PLAYER_ONE_START_Y - playerOneMarthStats.currentHeight / 2, 
-    playerOneMarthStats, playerOneControls, playerOneSounds, PLAYER_ONE_SPAWN_X, PLAYER_ONE_SPAWN_Y);
+    playerOneMarthStats, playerOneControls, playerOneSounds, PLAYER_ONE_SPAWN_X, PLAYER_ONE_SPAWN_Y, true);
 
   // Create player 2
   playerTwo = new Player(PLAYER_TWO_START_X, PLAYER_TWO_START_Y - playerTwoMarthStats.currentHeight / 2, 
-    playerTwoMarthStats, playerTwoControls, playerTwoSounds, PLAYER_TWO_SPAWN_X, PLAYER_TWO_SPAWN_Y);
+    playerTwoMarthStats, playerTwoControls, playerTwoSounds, PLAYER_TWO_SPAWN_X, PLAYER_TWO_SPAWN_Y, false);
 
   // Create stage
   stage = new Stage(STAGE_X, STAGE_Y, STAGE_WIDTH, STAGE_HEIGHT, 100);
