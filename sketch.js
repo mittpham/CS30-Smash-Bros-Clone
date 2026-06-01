@@ -68,6 +68,9 @@ const HIGH_KNOCKBACK_ANGLE = -38;
 const LOW_KNOCKBACK_THRESHOLD = 66;
 const HIGH_KNOCKBACK_THRESHOLD = 88;
 const R_KEY = 82;
+const P_KEY = 80;
+const C_KEY = 67;
+const M_KEY = 77;
 const PLAYER_TEXT_SIZE = 20;
 const BUFFER_WINDOW = 9;
 
@@ -136,12 +139,14 @@ const DAMAGE_METER_TEXT_SIZE = 40;
 const DAMAGE_METER_Y = 730;
 const PLAYER_NAME_TEXT_SIZE = 20;
 const DAMAGE_METER_GAP = 30;
+const MENU_TEXT_SIZE = 70;
+const CONTROLS_TEXT_SIZE = 50;
 
 let countdownTimer = 180;
 let countdownBegun = false;
 let marthWinDone = false;
 let gameAnnouncerPlayed = false;
-let gameState = "starting"; // menu, controls, starting, playing, gameOver
+let gameState = "menu"; // menu, controls, starting, playing, gameOver
 
 // Sounds
 let backgroundMusic;
@@ -499,7 +504,7 @@ class Player {
     this.currentFrame = 0;
     this.currentAnimation = "idle";
     this.animationTimer = 0;
-    this.animationSpeed = 30;
+    this.animationSpeed = 3;
     this.animationDirection = null;
     this.animations = new Map();
 
@@ -511,6 +516,15 @@ class Player {
       [[195, 153, 39, 62], [212, 215]],
       [[243, 153, 39, 62], [260, 215]],
       [[291, 154, 38, 61], [308, 215]]
+    ]);
+
+    this.animations.set("running", [
+      [[256, 325, 49, 40], [270, 365]],
+      [[323, 325, 62, 40], [342, 365]],
+      [[394, 326, 58, 38], [411, 364]],
+      [[457, 322, 60, 42], [473, 364]],
+      [[525, 323, 58, 43], [537, 366]],
+      [[589, 328, 59, 38], [605, 366]]
     ]);
   }
 
@@ -547,6 +561,9 @@ class Player {
     let offsetX = originX - croppedX;
     let offsetY = originY - croppedY;
 
+
+    push();
+
     // Choose the direction
     if (this.direction) {
       this.animationDirection = 1;
@@ -554,15 +571,30 @@ class Player {
     else {
       this.animationDirection = -1;
     }
+
+    // Flip the animation
+    translate(this.position.x - offsetX, this.position.y + this.stats.currentHeight / 2 - offsetY);
     scale(this.animationDirection, 1);
 
     // Draw the frame
     imageMode(CORNER);
-    image(marthSheet, 
-      this.position.x - offsetX, this.position.y + this.stats.currentHeight / 2 - offsetY, 
-      croppedW, croppedH, 
-      croppedX, croppedY, 
-      croppedW, croppedH);
+    if (this.direction) {
+      image(marthSheet, 
+        0, 0, 
+        croppedW, croppedH, 
+        croppedX, croppedY, 
+        croppedW, croppedH);
+    }
+    else {
+      image(marthSheet, 
+        0 - croppedW, 0,
+        croppedW, croppedH,
+        croppedX, croppedY,
+        croppedW, croppedH);
+    }
+
+    pop();
+
 
     // Marker to show player
     fill("white");
@@ -610,6 +642,9 @@ class Player {
     // Manage animations
     if (this.state === "idle") {
       this.currentAnimation = "idle";
+    }
+    else if (this.state === "running") {
+      this.currentAnimation = "running";
     }
 
     // Count timer to update frames
@@ -2367,8 +2402,25 @@ function keyPressed() {
     }
   }
 
+  // Events while menu
+  else if (gameState === "menu") {
+    if (keyCode === P_KEY) {
+      gameState = "starting";
+    }
+    else if (keyCode === C_KEY) {
+      gameState = "controls";
+    }
+  }
+
+  // Events while menu
+  else if (gameState === "controls") {
+    if (keyCode === M_KEY) {
+      gameState === "menu";
+    }
+  }
+
   // Events while game over
-  if (gameState === "gameOver") {
+  else if (gameState === "gameOver") {
 
     // Restart game
     if (keyCode === R_KEY) {
@@ -2403,11 +2455,35 @@ function keyPressed() {
 // Menu screen for game
 function displayMenu() {
 
+  // Define style
+  fill("white");
+  stroke("black");
+  rectMode(CENTER);
+  textAlign(CENTER, CENTER);
+  textSize(MENU_TEXT_SIZE);
+  text("Press P to play and C for controls.", width / 2, height / 2);
 }
 
 // Controls for players
 function displayControls() {
 
+  // Define style
+  fill("white");
+  stroke("black");
+  rectMode(CENTER);
+  textAlign(CENTER, CENTER);
+  textSize(CONTROLS_TEXT_SIZE);
+  text(`PLAYER ONE CONTROLS:
+    WASD movement
+    U attack
+    Q shorthop
+    E up
+    PLAYER TWO CONTROLS:
+    ARROWS movement
+    / attack
+    Home shorthop
+    Pageup up
+    Press M to go back to the menu`, width / 2, height / 2);
 }
 
 // Start the countdown before the game starts
