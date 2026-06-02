@@ -2062,7 +2062,7 @@ function preload() {
   marthSquatOne = loadSound("assets/marth/sounds/marthsquat.mp3");
   marthRiseOne = loadSound("assets/marth/sounds/marthrise.mp3");
   koOne = loadSound("assets/marth/sounds/ko.mp3");
-  finalKoOne = loadSound("assets/marth/sounds/finalKo.mp3");
+  finalKoOne = loadSound("assets/marth/sounds/finalko.mp3");
 
   // Player 2 sounds
   marthAppearTwo = loadSound("assets/marth/sounds/marthappear.mp3");
