@@ -38,13 +38,12 @@
 // https://sounds.spriters-resource.com/wii_u/supersmashbrosforwiiu/asset/397960/ - more marth sounds
 // https://www.hiclipart.com/free-transparent-background-png-clipart-vvulw - marth icon
 // https://www.spriters-resource.com/custom_edited/supersmashbroscustoms/asset/196310/ - marth portrait
+// https://www.youtube.com/watch?v=6znq-EYa8C0&list=RD6znq-EYa8C0&start_radio=1 - menu music
 
 // Things to do:
-// Fix multihits to reset
-// Add controls
+// Fix nair
 // 1. fix moving after hitstun
 // 2. add sounds kill sound, marth voice
-// 3. display stocks
 // 4. Adjust marths stats
 // 5. Fix the ratio for stage - 1 meter in game is about 16 pixels
 
@@ -73,6 +72,8 @@ const C_KEY = 67;
 const M_KEY = 77;
 const PLAYER_TEXT_SIZE = 20;
 const BUFFER_WINDOW = 9;
+const MARTH_ICON_SCALE_FACTOR = 0.2;
+const MARTH_ICON_GAP = 135;
 
 let winner = null;
 
@@ -81,6 +82,8 @@ const PLAYER_ONE_START_X = 520;
 const PLAYER_ONE_START_Y = 550;
 const PLAYER_ONE_SPAWN_X = 520;
 const PLAYER_ONE_SPAWN_Y = 200;
+const PLAYER_ONE_STOCK_X = 2350;
+const PLAYER_ONE_STOCK_Y = 3850;
 
 let playerOne;
 
@@ -101,6 +104,8 @@ const PLAYER_TWO_START_X = 920;
 const PLAYER_TWO_START_Y = 550;
 const PLAYER_TWO_SPAWN_X = 920;
 const PLAYER_TWO_SPAWN_Y = 200;
+const PLAYER_TWO_STOCK_X = 4350;
+const PLAYER_TWO_STOCK_Y = 3850;
 
 let playerTwo;
 
@@ -159,6 +164,7 @@ let gameAnnouncer;
 let stageSprite;
 let stageBackground;
 let marthSheet;
+let marthIcon;
 
 // Player one
 let marthAppearOne;
@@ -526,6 +532,10 @@ class Player {
       [[525, 323, 58, 43], [537, 366]],
       [[589, 328, 59, 38], [605, 366]]
     ]);
+
+    this.animations.set("crouching", [
+      [[362, 492, 58, 37], [376, 529]]
+    ]);
   }
 
   // Display the player and hitboxes
@@ -645,6 +655,9 @@ class Player {
     }
     else if (this.state === "running") {
       this.currentAnimation = "running";
+    }
+    else if (this.state === "crouching") {
+      this.currentAnimation = "crouching";
     }
 
     // Count timer to update frames
@@ -1714,6 +1727,7 @@ class Player {
     this.currentAttack = null;
     this.multihitAir = false;
     this.transitionWindowOpen = false;
+    gameAnnouncerPlayed = false;
 
     // Reset timers
     this.invincibilityTimer = INVINCIBILITY_TIMER;
@@ -2009,7 +2023,17 @@ class Stage {
 
     // Show the stocks
     for (let i = 0; i < playerOne.stocks; i++) {
-      
+      push();
+      scale(MARTH_ICON_SCALE_FACTOR, MARTH_ICON_SCALE_FACTOR);
+      image(marthIcon, PLAYER_ONE_STOCK_X + i * MARTH_ICON_GAP, PLAYER_ONE_STOCK_Y);
+      pop();
+    }
+
+    for (let i = 0; i < playerTwo.stocks; i++) {
+      push();
+      scale(MARTH_ICON_SCALE_FACTOR, MARTH_ICON_SCALE_FACTOR);
+      image(marthIcon, PLAYER_TWO_STOCK_X + i * MARTH_ICON_GAP, PLAYER_TWO_STOCK_Y);
+      pop();
     }
   }
 }
@@ -2023,6 +2047,7 @@ function preload() {
   marthWin = loadSound("assets/stage/sounds/marthwin.mp3");
   gameEndMusic = loadSound("assets/stage/sounds/gameendmusic.mp3");
   gameAnnouncer = loadSound("assets/stage/sounds/game.mp3");
+  menuMusic = loadSound("assets/stage/sounds/menumusic.mp3");
 
   // Player 1 sounds
   marthAppearOne = loadSound("assets/marth/sounds/marthappear.mp3");
@@ -2052,7 +2077,7 @@ function preload() {
   marthSquatTwo = loadSound("assets/marth/sounds/marthsquat.mp3");
   marthRiseTwo = loadSound("assets/marth/sounds/marthrise.mp3");
   koTwo = loadSound("assets/marth/sounds/ko.mp3");
-  finalKoTwo = loadSound("assets/marth/sounds/finalKo.mp3");
+  finalKoTwo = loadSound("assets/marth/sounds/finalko.mp3");
 
   // Stage sprites
   stageSprite = loadImage("assets/stage/stagesprite.png");
@@ -2060,6 +2085,7 @@ function preload() {
 
   // Marth sprites
   marthSheet = loadImage("assets/marth/animations/marthsprite.png");
+  marthIcon = loadImage("assets/marth/animations/marthicon.png");
 }
 
 // Setup player
@@ -2067,8 +2093,8 @@ function setup() {
   createCanvas(SCREEN_WIDTH, SCREEN_HEIGHT);
 
   // Start background music
-  backgroundMusic.loop();
   backgroundMusic.setVolume(0.1);
+  menuMusic.setVolume(0.1);
   
   // Player 1 sounds
   let playerOneSounds = {
@@ -2123,16 +2149,27 @@ function draw() {
   if (gameState === "menu") {
     background(0);
     displayMenu();
+    if (!menuMusic.isPlaying()) {
+      menuMusic.play();
+    }
   }
 
   // controls state
   else if (gameState === "controls") {
     background(0);
     displayControls();
+    if (!menuMusic.isPlaying()) {
+      menuMusic.play();
+    }
   }
 
   // starting state
   else if (gameState === "starting") {
+
+    menuMusic.stop();
+    if (!backgroundMusic.isPlaying()) {
+      backgroundMusic.loop();
+    }
 
     // Display background
     image(stageBackground, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -2415,7 +2452,7 @@ function keyPressed() {
   // Events while menu
   else if (gameState === "controls") {
     if (keyCode === M_KEY) {
-      gameState === "menu";
+      gameState = "menu";
     }
   }
 
