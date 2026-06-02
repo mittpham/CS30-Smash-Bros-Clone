@@ -41,11 +41,8 @@
 // https://www.youtube.com/watch?v=6znq-EYa8C0&list=RD6znq-EYa8C0&start_radio=1 - menu music
 
 // Things to do:
-// Fix nair
-// 1. fix moving after hitstun
-// 2. add sounds kill sound, marth voice
-// 4. Adjust marths stats
-// 5. Fix the ratio for stage - 1 meter in game is about 16 pixels
+// fix nair
+// add animations
 
 // Canvas constants
 const SCREEN_WIDTH = 1440;
@@ -249,6 +246,7 @@ let playerTwoMarthStats = {
 
 // Jab
 let marthJabOne = {
+  name: "marthJabOne",
   offsetX: 60,
   offsetY: -10,
   width: 100,
@@ -266,6 +264,7 @@ let marthJabOne = {
 };
 
 let marthJabTwo = {
+  name: "marthJabTwo",
   offsetX: 60,
   offsetY: -10,
   width: 100,
@@ -286,6 +285,7 @@ let marthJab = [marthJabOne, marthJabTwo];
 
 // Forward tilt
 let marthForwardTilt = {
+  name: "marthForwardTilt",
   offsetX: 60,
   offsetY: -10,
   width: 100,
@@ -302,6 +302,7 @@ let marthForwardTilt = {
 
 // Down tilt
 let marthDownTilt = {
+  name: "marthDownTilt",
   offsetX: 60,
   offsetY: 10,
   width: 120,
@@ -318,6 +319,7 @@ let marthDownTilt = {
 
 // Up tilt
 let marthUpTilt = {
+  name: "marthUpTilt",
   offsetX: 0,
   offsetY: -40,
   width: 120,
@@ -334,6 +336,7 @@ let marthUpTilt = {
 
 // Neutral air
 let marthNeutralAirOne = {
+  name: "marthNeutralAirOne",
   offsetX: 20,
   offsetY: 0,
   width: 100,
@@ -354,6 +357,7 @@ let marthNeutralAirOne = {
 };
 
 let marthNeutralAirTwo = {
+  name: "marthNeutralAirTwo",
   offsetX: 0,
   offsetY: 0,
   width: 150,
@@ -377,6 +381,7 @@ let marthNeutralAir = [marthNeutralAirOne, marthNeutralAirTwo];
 
 // Forward air
 let marthForwardAir = {
+  name: "marthForwardAir",
   offsetX: 60,
   offsetY: 0,
   width: 120,
@@ -398,6 +403,7 @@ let marthForwardAir = {
 
 // Back air
 let marthBackAir = {
+  name: "marthBackAir",
   offsetX: -40,
   offsetY: 0,
   width: 100,
@@ -419,6 +425,7 @@ let marthBackAir = {
 
 // Down air
 let marthDownAir = {
+  name: "marthDownAir",
   offsetX: 0,
   offsetY: 60,
   width: 120,
@@ -440,6 +447,7 @@ let marthDownAir = {
 
 // Up air
 let marthUpAir = {
+  name: "marthUpAir",
   offsetX: 0,
   offsetY: -40,
   width: 110,
@@ -495,6 +503,8 @@ class Player {
     this.touchingBottom = false;
     this.multihitAir = false;
     this.transitionWindowOpen = false;
+    this.jumping = false;
+    this.doubleJumping = false;
 
     // Timers
     this.jumpSquatTimer = JUMPSQUAT_TIMER;
@@ -535,6 +545,70 @@ class Player {
 
     this.animations.set("crouching", [
       [[362, 492, 58, 37], [376, 529]]
+    ]);
+
+    this.animations.set("jumping",[
+      [[60, 579, 36, 63], [73, 642]],
+      [[109, 580, 47, 62], [125, 642]],
+      [[159, 580, 50, 62], [175, 642]],
+      [[212, 582, 51, 59], [229, 641]],
+      [[270, 583, 47, 58], [282, 641]],
+      [[325, 583, 46, 57], [338, 640]],
+      [[383, 583, 46, 57], [396, 640]],
+      [[436, 583, 46, 57], [449, 640]]
+    ]);
+
+    this.animations.set("doubleJumping", [
+      [[57, 667, 48, 57], [80, 691]],
+      [[124, 666, 39, 55], [144, 691]],
+      [[194, 665, 36, 52], [214, 691]],
+      [[257, 673, 46, 55], [282, 688]],
+      [[325, 679, 51, 49], [352, 688]],
+      [[387, 676, 56, 46], [417, 693]],
+      [[455, 666, 60, 40], [491, 696]],
+      [[535, 660, 38, 55], [558, 697]]
+    ]);
+
+    this.animations.set("landing", [
+      [[50, 840, 41, 46], [67, 885]],
+      [[119, 843, 37, 45], [134, 885]],
+      [[189, 838, 29, 47], [200, 884]], 
+      [[255, 832, 37, 53], [265, 884]],
+      [[315, 828, 47, 58], [334, 885]],
+      [[373, 827, 54, 59], [399, 886]],
+      [[433, 826, 57, 60], [463, 886]],
+      [[495, 826, 58, 60] ,[530, 886]],
+      [[573, 826, 44, 60], [597, 886]],
+      [[646, 826, 37, 60], [663, 886]]
+    ]);
+
+    this.animations.set("jabOne", [
+      [[55, 912, 39, 60], [74, 972]], 
+      [[164, 915, 39, 56], [186, 971]], 
+      [[285, 914, 35, 58], [300, 971]], 
+      [[389, 923, 45, 49], [407, 971]], 
+      [[506, 921, 91, 51], [519, 972]],
+      [[615, 907, 86, 65], [630, 972]],
+      [[716, 884, 52, 87], [741, 971]],
+      [[819, 916, 66, 56], [854, 972]],
+      [[938, 919, 55, 52], [963, 971]],
+      [[1058, 917, 41, 54], [1075, 970]],
+      [[1164, 917, 60, 55], [1185, 971]]
+    ]);
+
+    this.animations.set("jabTwo", [
+      [[], []],
+      [[], []],
+      [[], []],
+      [[], []],
+      [[], []],
+      [[], []],
+      [[], []],
+      [[], []],
+      [[], []],
+      [[], []],
+      [[], []],
+      [[], []]
     ]);
   }
 
@@ -643,23 +717,76 @@ class Player {
   // Update and control the animations for marth
   updateAnimation() {
 
-    // // Reset animations if they change
-    // if (this.currentAnimation !== newAnimation) {
-    //   this.currentAnimation = newAnimation;
-    //   this.currentFrame = 0;
-    // }
-
+    // Default animation
+    let newAnimation = "idle";
+    
     // Manage animations
     if (this.state === "idle") {
-      this.currentAnimation = "idle";
+      this.animationSpeed = 8;
+      this.newAnimation = "idle";
     }
     else if (this.state === "running") {
-      this.currentAnimation = "running";
+      this.animationSpeed = 3;
+      this.newAnimation = "running";
     }
     else if (this.state === "crouching") {
-      this.currentAnimation = "crouching";
+      this.newAnimation = "crouching";
+    }
+    else if (this.velocity.y === this.stats.shortHopPower || this.velocity.y === this.fullHopPower) {
+      this.newAnimation = "jumping";
+    }
+    else if (this.velocity.y === this.stats.doubleJumpPower) {
+      this.animationSpeed = 8;
+      this.newAnimation = "doubleJumping";
+    }
+    else if (this.state === "landing") {
+      this.animationSpeed = 1;
+      this.newAnimation = "landing";
+    }
+    else if (this.currentAttack !== null) {
+
+      if (this.currentAttack.name === "marthJabOne") {
+        this.newAnimation = "jabOne";
+      }
+      else if (this.currentAttack.name === "marthJabTwo") {
+        this.newAnimation = "jabTwo";
+      }
+      else if (this.currentAttack.name === "marthDownTilt") {
+        this.newAnimation = "downTilt";
+      }
+      else if (this.currentAttack.name === "marthForwardTilt") {
+        this.newAnimation = "forwardTilt";
+      }
+      else if (this.currentAttack.name === "marthUpTilt") {
+        this.newAnimation = "upTilt";
+      }
+      else if (this.currentAttack.name === "marthNeutralAirOne") {
+        this.newAnimation = "neutralAirOne";
+      }
+      else if (this.currentAttack.name === "marthNeutralAirTwo") {
+        this.newAnimation = "neutralAirTwo";
+      }
+      else if (this.currentAttack.name === "marthUpAir") {
+        this.newAnimation = "upAir";
+      }
+      else if (this.currentAttack.name === "marthBackAir") {
+        this.newAnimation = "backAir";
+      }
+      else if (this.currentAttack.name === "marthForwardAir") {
+        this.newAnimation = "forwardAir";
+      }
+      else if (this.currentAttack.name === "marthDownAir") {
+        this.newAnimation = "downAir";
+      }
     }
 
+    // Reset animations if they change
+    if (this.currentAnimation !== newAnimation) {
+      this.currentAnimation = newAnimation;
+      this.currentFrame = 0;
+      this.animationTimer = 0;
+    }
+    
     // Count timer to update frames
     this.animationTimer++;
     let totalFrames = this.animations.get(this.currentAnimation).length;
@@ -1353,7 +1480,7 @@ class Player {
             this.multihitBuffer = 0;
   
             // New attack
-            this.currentAttack = new Attack(this.direction, this.position.x, this.position.y, attack.offsetX, 
+            this.currentAttack = new Attack(attack.name, this.direction, this.position.x, this.position.y, attack.offsetX, 
               attack.offsetY, attack.width, attack.height, attack.damage, 
               attack.startingFrames, attack.activeFrames, attack.endingFrames, 
               attack.angle, attack.knockback, attack.growthKnockback, attack.shieldStun, 
@@ -1376,7 +1503,7 @@ class Player {
             this.multihitBuffer = 0;
   
             // New attack
-            this.currentAttack = new Attack(this.direction, this.position.x, this.position.y, attack.offsetX, 
+            this.currentAttack = new Attack(attack.name, this.direction, this.position.x, this.position.y, attack.offsetX, 
               attack.offsetY, attack.width, attack.height, attack.damage, 
               attack.startingFrames, attack.activeFrames, attack.endingFrames, 
               attack.angle, attack.knockback, attack.growthKnockback, attack.shieldStun, 
@@ -1647,7 +1774,7 @@ class Player {
   spawnGroundHitbox(attack, crouching) {
 
     // Make the players current attack a new instance
-    this.currentAttack = new Attack(this.direction, this.position.x, this.position.y, attack.offsetX, 
+    this.currentAttack = new Attack(attack.name, this.direction, this.position.x, this.position.y, attack.offsetX, 
       attack.offsetY, attack.width, attack.height, attack.damage, 
       attack.startingFrames, attack.activeFrames, attack.endingFrames, 
       attack.angle, attack.knockback, attack.growthKnockback, attack.shieldStun);
@@ -1670,7 +1797,7 @@ class Player {
   spawnAirHitbox(attack) {
 
     // Make the players current attack a new instance
-    this.currentAttack = new Attack(this.direction, this.position.x, this.position.y, attack.offsetX, 
+    this.currentAttack = new Attack(attack.name, this.direction, this.position.x, this.position.y, attack.offsetX, 
       attack.offsetY, attack.width, attack.height, attack.damage, 
       attack.startingFrames, attack.activeFrames, attack.endingFrames, 
       attack.angle, attack.knockback, attack.growthKnockback, attack.shieldStun, 
@@ -1694,7 +1821,7 @@ class Player {
     this.multihitBuffer = 0;
 
     // Make the players current attack a new instance
-    this.currentAttack = new Attack(this.direction, this.position.x, this.position.y, attackSequence[0].offsetX, 
+    this.currentAttack = new Attack(attackSequence[0].name, this.direction, this.position.x, this.position.y, attackSequence[0].offsetX, 
       attackSequence[0].offsetY, attackSequence[0].width, attackSequence[0].height, attackSequence[0].damage, 
       attackSequence[0].startingFrames, attackSequence[0].activeFrames, attackSequence[0].endingFrames, 
       attackSequence[0].angle, attackSequence[0].knockback, attackSequence[0].growthKnockback, attackSequence[0].shieldStun, 
@@ -1766,11 +1893,12 @@ class Player {
 
 // Create an attack
 class Attack {
-  constructor(playerDirection, playerX, playerY, attackOffsetX, attackOffsetY, attackWidth, 
+  constructor(name, playerDirection, playerX, playerY, attackOffsetX, attackOffsetY, attackWidth, 
     attackHeight, attackDamage, attackStartingFrames, attackActiveFrames, attackEndingFrames, attackAngle, 
     attackBaseKnockback, attackGrowthKnockBack, attackShieldStun, attackTransitionFrame, attackAutoTransition, attackLandingLag, attackAutoCancelStart, attackAutoCancelEnd) {
 
     // Hitbox and size
+    this.name = name;
     this.x = 0;
     this.y = 0;
     this.offsetX = attackOffsetX;
