@@ -41,7 +41,7 @@
 // https://www.youtube.com/watch?v=6znq-EYa8C0&list=RD6znq-EYa8C0&start_radio=1 - menu music
 
 // Things to do:
-// add animations
+// nair 1 is missing
 
 // Canvas constants
 const SCREEN_WIDTH = 1440;
@@ -92,7 +92,8 @@ let playerOneControls = {
   down: 83, // S key
   shortHop: 81, // Q key
   attack: 85, // U key
-  special: 89, // Y key
+  forwardTilt: 89, // Y key
+  special: 72, // H key
 };
 
 // Player 2 constants and variables
@@ -114,7 +115,8 @@ let playerTwoControls = {
   down: 40, // Down arrow
   shortHop: 36, // Home key / Numberpad 7
   attack: 191, // Slash key
-  special: 16, // Shift key
+  forwardTilt: 16, // Shift key
+  special: 222,  // ' Key
 };
 
 // Stage constants and variables
@@ -141,7 +143,7 @@ const DAMAGE_METER_Y = 730;
 const PLAYER_NAME_TEXT_SIZE = 20;
 const DAMAGE_METER_GAP = 30;
 const MENU_TEXT_SIZE = 70;
-const CONTROLS_TEXT_SIZE = 50;
+const CONTROLS_TEXT_SIZE = 40;
 
 let countdownTimer = 180;
 let countdownBegun = false;
@@ -156,6 +158,7 @@ let marthWin;
 let gameEndMusic;
 let gameAnnouncer;
 let menuMusic;
+let entranceSound;
 
 // Sprites and images
 let stageSprite;
@@ -488,7 +491,7 @@ class Player {
     this.sounds = sounds;
 
     // States
-    this.state = "idle"; // idle, running, crouching, airborne, jumpsquat, landing, dead, spawning, attacking, crouchAttacking, airAttacking, multihitAttacking, hitstun
+    this.state = "entrance"; // idle, running, crouching, airborne, jumpsquat, landing, dead, spawning, attacking, crouchAttacking, airAttacking, multihitAttacking, hitstun, entrance
 
     // Flags/Conditions
     this.direction = direction;
@@ -503,8 +506,7 @@ class Player {
     this.touchingBottom = false;
     this.multihitAir = false;
     this.transitionWindowOpen = false;
-    this.jumping = false;
-    this.doubleJumping = false;
+    this.upSpecialAvailable = true;
 
     // Timers
     this.jumpSquatTimer = JUMPSQUAT_TIMER;
@@ -581,6 +583,20 @@ class Player {
       [[573, 826, 44, 60], [597, 886]],
       [[646, 826, 37, 60], [663, 886]]
     ]);
+
+    this.animations.set("entrance", [
+      [[48, 35, 25, 57], [59, 92]],
+      [[95, 35, 26, 58], [109, 93]],
+      [[146, 35, 38, 58], [162, 93]],
+      [[198, 35, 24, 61], [212, 96]],
+      [[237, 35, 42, 57], [261, 92]],
+      [[295, 35, 28, 56], [309, 91]],
+      [[353, 43, 26, 64], [364, 107]],
+      [[444, 39, 25, 68], [454, 107]],
+      [[533, 47, 36, 60], [546, 107]],
+      [[619, 47, 37, 60], [635, 107]],
+      [[709, 47, 37, 60], [725, 107]],
+    ]),
 
     this.animations.set("jabOne", [
       [[55, 912, 39, 60], [74, 972]], 
@@ -707,23 +723,58 @@ class Player {
       [[1355, 1686, 47, 51], [1391, 1737]],
       [[1474, 1683, 46, 57], [1509, 1740]]
     ]);
+
+    this.animations.set("forwardAir", [
+      [[86, 1788, 45, 58], [103, 1846]], 
+      [[180, 1773, 43, 68], [206, 1841]],
+      [[287, 1778, 71, 65], [322, 1841]],
+      [[384, 1792, 79, 53], [416, 1842]],
+      [[477, 1794, 60, 58], [507, 1845]],
+      [[572, 1794, 45, 60], [590, 1849]],
+      [[653, 1795, 59, 53], [678, 1848]],
+      [[749, 1794, 57, 54], [770, 1848]],
+      [[847, 1791, 56, 51], [861, 1842]],
+      [[952, 1796, 42, 41], [960, 1836]],
+      [[1048, 1792, 40, 46], [1051, 1838]],
+      [[1146, 1789, 39, 53], [1149, 1842]],
+      [[1235, 1789, 40, 55], [1243, 1844]],
+      [[1326, 1789, 46, 57], [1340, 1846]]
+    ]);
+
+    this.animations.set("downAir", [
+      [[89, 1904, 58, 52], [114, 1955]],
+      [[191, 1893, 48, 71], [227, 1963]],
+      [[302, 1905, 42, 55], [330, 1960]],
+      [[403, 1910, 73, 55], [439, 1964]],
+      [[507, 1912, 45, 75], [529, 1987]],
+      [[600, 1915, 54, 50], [649, 1965]],
+      [[686, 1911, 79, 53], [750, 1964]],
+      [[805, 1889, 69, 71], [852, 1960]],
+      [[937, 1888, 38, 71], [956, 1959]],
+      [[1040, 1888, 48, 75], [1060, 1963]],
+      [[1134, 1893, 59, 70], [1166, 1963]],
+      [[1230, 1891, 67, 73], [1270, 1964]],
+      [[1352, 1901, 46, 65], [1369, 1966]],
+      [[1462, 1899, 32, 66], [1472, 1965]],
+      [[1561, 1906, 46, 57], [1574, 1963]]
+    ]);
   }
 
   // Display the player and hitboxes
   display() {
 
-    // Draw player from the center
-    rectMode(CENTER);
+    // // Draw player from the center
+    // rectMode(CENTER);
 
-    // Square to represent the player
-    noStroke();
-    fill(this.stats.color);
-    rect(this.position.x, this.position.y, this.stats.width, this.stats.currentHeight);
+    // // Square to represent the player
+    // noStroke();
+    // fill(this.stats.color);
+    // rect(this.position.x, this.position.y, this.stats.width, this.stats.currentHeight);
 
-    // Draw hitboxes
-    if (this.currentAttack !== null) {
-      this.currentAttack.display();
-    }
+    // // Draw hitboxes
+    // if (this.currentAttack !== null) {
+    //   this.currentAttack.display();
+    // }
 
     // Pull the current animation as well as the current frame
     let currentAnimationData = this.animations.get(this.currentAnimation);
@@ -749,6 +800,9 @@ class Player {
     translate(this.position.x, this.position.y + this.stats.currentHeight / 2);
     if (!this.direction) {
       scale(-1, 1);
+    }
+    else {
+      scale(1, 1);
     }
 
     // Draw the frame
@@ -813,16 +867,25 @@ class Player {
     else if (this.state === "crouching") {
       newAnimation = "crouching";
     }
-    else if (this.velocity.y === this.stats.shortHopPower || this.velocity.y === this.fullHopPower) {
-      newAnimation = "jumping";
-    }
-    else if (this.velocity.y === this.stats.doubleJumpPower) {
+    else if (this.state === "airborne" && !this.doubleJumpAvailable) {
       this.animationSpeed = 8;
       newAnimation = "doubleJumping";
+    }
+    else if (this.state === "airborne" && this.doubleJumpAvailable) {
+      this.animationSpeed = 6;
+      newAnimation = "jumping";
     }
     else if (this.state === "landing") {
       this.animationSpeed = 1;
       newAnimation = "landing";
+    }
+    else if (this.state === "entrance") {
+      this.animationSpeed = 5.5;
+      newAnimation = "entrance";
+    }
+    else if (this.state === "spawning") {
+      this.animationSpeed = 8;
+      newAnimation = "idle";
     }
     else if (this.currentAttack !== null) {
 
@@ -2273,6 +2336,7 @@ function preload() {
   gameEndMusic = loadSound("assets/stage/sounds/gameendmusic.mp3");
   gameAnnouncer = loadSound("assets/stage/sounds/game.mp3");
   menuMusic = loadSound("assets/stage/sounds/menumusic.mp3");
+  entranceSound = loadSound("assets/marth/sounds/entrance.mp3");
 
   // Player 1 sounds
   marthAppearOne = loadSound("assets/marth/sounds/marthappear.mp3");
@@ -2479,13 +2543,13 @@ function keyPressed() {
       }
   
       // Attacking
-      if (keyCode === playerOne.controls.attack) {
+      if (keyCode === playerOne.controls.attack || keyCode === playerOne.controls.forwardTilt) {
   
         // Attacks from idle state
         if (playerOne.state === "idle") {
   
           // Attacking left and right
-          if (keyIsDown(playerOne.controls.left) || keyIsDown(playerOne.controls.right)) {
+          if (keyIsDown(playerOne.controls.forwardTilt)) {
             playerOne.spawnGroundHitbox(marthForwardTilt, false);
           }
   
@@ -2587,13 +2651,13 @@ function keyPressed() {
       }
   
       // Attacking
-      if (keyCode === playerTwo.controls.attack) {
+      if (keyCode === playerTwo.controls.attack || keyCode === playerTwo.controls.forwardTilt) {
   
         // Attacks from idle state
         if (playerTwo.state === "idle") {
 
           // Attacking forward
-          if (keyIsDown(playerTwo.controls.left) || keyIsDown(playerTwo.controls.right)) {
+          if (keyIsDown(playerTwo.controls.forwardTilt)) {
             playerTwo.spawnGroundHitbox(marthForwardTilt, false);
           }
   
@@ -2697,8 +2761,8 @@ function keyPressed() {
       // Reset players
       playerOne.resetPlayer();
       playerTwo.resetPlayer();
-      playerOne.state = "idle";
-      playerTwo.state = "idle";
+      playerOne.state = "entrance";
+      playerTwo.state = "entrance";
       playerOne.position.set(PLAYER_ONE_START_X, PLAYER_ONE_START_Y - playerOneMarthStats.currentHeight / 2);
       playerTwo.position.set(PLAYER_TWO_START_X, PLAYER_TWO_START_Y - playerTwoMarthStats.currentHeight / 2);
       playerOne.velocity.set(0, 0);
@@ -2738,11 +2802,13 @@ function displayControls() {
   text(`PLAYER ONE CONTROLS:
     WASD movement
     U attack
+    Y forward tilt
     Q shorthop
     E up
     PLAYER TWO CONTROLS:
     ARROWS movement
     / attack
+    Shift forward tilt
     Home shorthop
     Pageup up
     Press M to go back to the menu`, width / 2, height / 2);
@@ -2771,13 +2837,20 @@ function countDown() {
   if (countdownTimer > THREE_SECOND_MARK) {
     text("3", width / 2, height / 2);
 
+    // Play sound
+    if (!entranceSound.isPlaying()) {
+      entranceSound.play();
+    }
+
     // Draw stage
     stage.update();
     stage.display(playerOne, playerTwo);
 
     // Display player
     playerOne.display();
+    playerOne.updateAnimation();
     playerTwo.display();
+    playerTwo.updateAnimation();
   }
   else if (countdownTimer > TWO_SECOND_MARK) {
     text("2", width / 2, height / 2);
@@ -2787,8 +2860,12 @@ function countDown() {
     stage.display(playerOne, playerTwo);
 
     // Display player
+    playerOne.state = "idle";
     playerOne.display();
+    playerOne.updateAnimation();
+    playerTwo.state = "idle";
     playerTwo.display();
+    playerTwo.updateAnimation();
   }
   else if (countdownTimer > ONE_SECOND_MARK) {
     text("1", width / 2, height / 2);
@@ -2799,7 +2876,9 @@ function countDown() {
 
     // Display player
     playerOne.display();
+    playerOne.updateAnimation();
     playerTwo.display();
+    playerTwo.updateAnimation();
   }
   else if (countdownTimer > GO_MARK) {
     text("GO!", width / 2, height / 2);
