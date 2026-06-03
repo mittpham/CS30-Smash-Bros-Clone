@@ -41,7 +41,6 @@
 // https://www.youtube.com/watch?v=6znq-EYa8C0&list=RD6znq-EYa8C0&start_radio=1 - menu music
 
 // Things to do:
-// fix nair
 // add animations
 
 // Canvas constants
@@ -156,6 +155,7 @@ let countdownAnnouncer;
 let marthWin;
 let gameEndMusic;
 let gameAnnouncer;
+let menuMusic;
 
 // Sprites and images
 let stageSprite;
@@ -213,10 +213,10 @@ let playerOneMarthStats = {
   weight: 90,
   color: "blue",
   width: 40,
-  currentHeight: 80,
-  idleHeight: 80,
+  currentHeight: 60,
+  idleHeight: 60,
   crouchHeight: 40,
-  offsetCrouchHeight: 20,
+  offsetCrouchHeight: 10,
   name: "P1",
 };
 
@@ -235,10 +235,10 @@ let playerTwoMarthStats = {
   weight: 90,
   color: "blue",
   width: 40,
-  currentHeight: 80,
-  idleHeight: 80,
+  currentHeight: 60,
+  idleHeight: 60,
   crouchHeight: 40,
-  offsetCrouchHeight: 20,
+  offsetCrouchHeight: 10,
   name: "P2",
 };
 
@@ -343,7 +343,7 @@ let marthNeutralAirOne = {
   height: 30,
   startingFrames: 6,
   activeFrames: 1,
-  endingFrames: 0,
+  endingFrames: 1,
   damage: 5,
   angle: -90,
   knockback: 35,
@@ -597,18 +597,115 @@ class Player {
     ]);
 
     this.animations.set("jabTwo", [
-      [[], []],
-      [[], []],
-      [[], []],
-      [[], []],
-      [[], []],
-      [[], []],
-      [[], []],
-      [[], []],
-      [[], []],
-      [[], []],
-      [[], []],
-      [[], []]
+      [[30, 1002, 57, 61], [65, 1063]],
+      [[180, 999, 48, 64], [187, 1063]],
+      [[300, 1012, 90, 52], [307, 1064]],
+      [[422, 1021, 59, 43], [428, 1064]],
+      [[541, 1022, 56, 42], [548, 1064]],
+      [[661, 1017, 54, 47], [668, 1064]],
+      [[781, 1014, 53, 50], [788, 1064]],
+      [[901, 1015, 46, 49], [908, 1064]],
+      [[1023, 1009, 47, 55], [1031, 1064]],
+      [[1147, 1010, 38, 54], [1158, 1064]],
+      [[1261, 1007, 55, 57], [1281, 1064]],
+      [[1379, 1003, 54, 60], [1401, 1063]]
+    ]);
+
+    this.animations.set("downTilt", [
+      [[64, 1144, 58, 37], [72, 1181]],
+      [[168, 1150, 57, 33], [175, 1183]],
+      [[267, 1147, 50, 39], [277, 1183]],
+      [[371, 1146, 64, 37], [376, 1183]],
+      [[473, 1148, 92, 35], [478, 1183]],
+      [[574, 1148, 94, 35], [579, 1183]],
+      [[675, 1148, 84, 34], [680, 1182]],
+      [[776, 1149, 74, 33], [781, 1182]],
+      [[877, 1149, 67, 34], [882, 1183]],
+      [[979, 1149, 56, 34], [983, 1183]],
+      [[1079, 1149, 55, 34], [1084, 1183]],
+      [[1174, 1147, 58, 36], [1185, 1183]]
+    ]);
+
+    this.animations.set("forwardTilt", [
+      [[72, 1230, 38, 54], [88, 1282]],
+      [[173, 1231, 38, 53], [183, 1283]],
+      [[280, 1234, 82, 49], [286, 1283]],
+      [[380, 1237, 91, 46], [386, 1282]],
+      [[480, 1218, 52, 64], [486, 1282]],
+      [[572, 1246, 61, 39], [587, 1282]],
+      [[683, 1246, 51, 39], [689, 1282]],
+      [[786, 1244, 48, 42], [790, 1282]],
+      [[890, 1234, 52, 51], [895, 1283]],
+      [[978, 1225, 52, 59], [996, 1284]],
+      [[1078, 1224, 48, 60], [1097, 1284]],
+      [[1189, 1224, 37, 60], [1199, 1284]]
+    ]);
+
+    this.animations.set("upTilt", [
+      [[80, 1351, 36, 50], [95, 1398]],
+      [[166, 1345, 79, 56], [177, 1401]],
+      [[257, 1326, 62, 75], [265, 1401]],
+      [[345, 1327, 37, 74], [353, 1401]],
+      [[422, 1340, 46, 61], [441, 1401]],
+      [[511, 1350, 47, 51], [529, 1401]],
+      [[598, 1347, 44, 54], [616, 1400]],
+      [[689, 1344, 43, 59], [701, 1401]],
+      [[778, 1341, 39, 60], [792, 1401]]
+    ]);
+
+    this.animations.set("neutralAir", [
+      [[70, 1459, 43, 61], [79, 1520]],
+      [[176, 1457, 47, 61], [190, 1518]],
+      [[268, 1456, 66, 58], [304, 1514]],
+      [[412, 1461, 27, 54], [415, 1515]],
+      [[519, 1462, 77, 54], [527, 1516]],
+      [[629, 1462, 47, 54], [640, 1516]],
+      [[743, 1462, 34, 54], [751, 1516]],
+      [[847, 1459, 45, 57], [862, 1516]],
+      [[961, 1464, 42, 53], [971, 1517]],
+      [[1080, 1463, 79, 55], [1084, 1518]],
+      [[1194, 1460, 31, 58], [1198, 1518]],
+      [[1273, 1458, 74, 61], [1314, 1519]],
+      [[1409, 1460, 52, 59], [1431, 1519]],
+      [[1528, 1460, 48, 60], [1547, 1520]],
+      [[1645, 1461, 70, 60], [1662, 1521]],
+      [[1757, 1462, 68, 59], [1777, 1521]],
+      [[1870, 1461, 45, 61], [1891, 1522]],
+      [[1984, 1464, 29, 58], [1998, 1522]],
+      [[2088, 1465, 41, 53], [2102, 1518]],
+      [[2207, 1464, 45, 58], [2218, 1522]]
+    ]);
+
+    this.animations.set("upAir", [
+      [[74, 1580, 40, 46], [102, 1626]],
+      [[167, 1577, 60, 52], [201, 1629]],
+      [[264, 1562, 65, 67], [298, 1629]],
+      [[360, 1541, 42, 90], [394, 1631]],
+      [[431, 1562, 64, 70], [486, 1632]],
+      [[522, 1580, 70, 52], [575, 1632]],
+      [[641, 1586, 47, 47], [670, 1633]],
+      [[744, 1583, 45, 45], [785, 1619]],
+      [[842, 1577, 55, 51], [874, 1577]],
+      [[928, 1577, 62, 54], [935, 1577]],
+      [[1022, 1577, 55, 48], [1023, 1592]],
+      [[1124, 1578, 47, 44], [1130, 1622]],
+      [[1222, 1571, 46, 57], [1235, 1628]]
+    ]);
+
+    this.animations.set("backAir", [
+      [[73, 1683, 46, 57], [86, 1739]],
+      [[189, 1681, 46, 59], [202, 1740]],
+      [[303, 1670, 38, 72], [320, 1742]],
+      [[419, 1682, 50, 60], [436, 1742]],
+      [[535, 1682, 61, 59], [556, 1741]],
+      [[655, 1682, 55, 60], [683, 1737]],
+      [[757, 1680, 75, 67], [823, 1737]],
+      [[843, 1685, 111, 55], [938, 1740]],
+      [[993, 1659, 75, 84], [1050, 1743]],
+      [[1129, 1657, 45, 85], [1165, 1742]],
+      [[1243, 1666, 42, 68], [1282, 1734]],
+      [[1355, 1686, 47, 51], [1391, 1737]],
+      [[1474, 1683, 46, 57], [1509, 1740]]
     ]);
   }
 
@@ -648,35 +745,19 @@ class Player {
 
     push();
 
-    // Choose the direction
-    if (this.direction) {
-      this.animationDirection = 1;
+    // Flip the animation if the direction is left
+    translate(this.position.x, this.position.y + this.stats.currentHeight / 2);
+    if (!this.direction) {
+      scale(-1, 1);
     }
-    else {
-      this.animationDirection = -1;
-    }
-
-    // Flip the animation
-    translate(this.position.x - offsetX, this.position.y + this.stats.currentHeight / 2 - offsetY);
-    scale(this.animationDirection, 1);
 
     // Draw the frame
     imageMode(CORNER);
-    if (this.direction) {
-      image(marthSheet, 
-        0, 0, 
-        croppedW, croppedH, 
-        croppedX, croppedY, 
-        croppedW, croppedH);
-    }
-    else {
-      image(marthSheet, 
-        0 - croppedW, 0,
-        croppedW, croppedH,
-        croppedX, croppedY,
-        croppedW, croppedH);
-    }
-
+    image(marthSheet, 
+      -offsetX, -offsetY, 
+      croppedW, croppedH, 
+      croppedX, croppedY, 
+      croppedW, croppedH);
     pop();
 
 
@@ -718,65 +799,77 @@ class Player {
   updateAnimation() {
 
     // Default animation
-    let newAnimation = "idle";
+    let newAnimation = this.currentAnimation;
     
     // Manage animations
     if (this.state === "idle") {
       this.animationSpeed = 8;
-      this.newAnimation = "idle";
+      newAnimation = "idle";
     }
     else if (this.state === "running") {
       this.animationSpeed = 3;
-      this.newAnimation = "running";
+      newAnimation = "running";
     }
     else if (this.state === "crouching") {
-      this.newAnimation = "crouching";
+      newAnimation = "crouching";
     }
     else if (this.velocity.y === this.stats.shortHopPower || this.velocity.y === this.fullHopPower) {
-      this.newAnimation = "jumping";
+      newAnimation = "jumping";
     }
     else if (this.velocity.y === this.stats.doubleJumpPower) {
       this.animationSpeed = 8;
-      this.newAnimation = "doubleJumping";
+      newAnimation = "doubleJumping";
     }
     else if (this.state === "landing") {
       this.animationSpeed = 1;
-      this.newAnimation = "landing";
+      newAnimation = "landing";
     }
     else if (this.currentAttack !== null) {
 
       if (this.currentAttack.name === "marthJabOne") {
-        this.newAnimation = "jabOne";
+        this.animationSpeed = 2.3;
+        newAnimation = "jabOne";
       }
       else if (this.currentAttack.name === "marthJabTwo") {
-        this.newAnimation = "jabTwo";
+        this.animationSpeed = 2.3;
+        newAnimation = "jabTwo";
       }
       else if (this.currentAttack.name === "marthDownTilt") {
-        this.newAnimation = "downTilt";
+        this.animationSpeed = 1.9;
+        newAnimation = "downTilt";
       }
       else if (this.currentAttack.name === "marthForwardTilt") {
-        this.newAnimation = "forwardTilt";
+        this.animationSpeed = 2.8;
+        newAnimation = "forwardTilt";
       }
       else if (this.currentAttack.name === "marthUpTilt") {
-        this.newAnimation = "upTilt";
+        this.animationSpeed = 3.7;
+        newAnimation = "upTilt";
       }
-      else if (this.currentAttack.name === "marthNeutralAirOne") {
-        this.newAnimation = "neutralAirOne";
-      }
-      else if (this.currentAttack.name === "marthNeutralAirTwo") {
-        this.newAnimation = "neutralAirTwo";
+      else if (this.currentAttack.name === "marthNeutralAirOne"
+         || this.currentAttack.name === "marthNeutralAirTwo") {
+        this.animationSpeed = 2.5;
+        newAnimation = "neutralAir";
       }
       else if (this.currentAttack.name === "marthUpAir") {
-        this.newAnimation = "upAir";
+        this.animationSpeed = 3.5;
+        newAnimation = "upAir";
       }
       else if (this.currentAttack.name === "marthBackAir") {
-        this.newAnimation = "backAir";
+        this.animationSpeed = 3;
+        newAnimation = "backAir";
       }
       else if (this.currentAttack.name === "marthForwardAir") {
-        this.newAnimation = "forwardAir";
+        this.animationSpeed = 2.6;
+        newAnimation = "forwardAir";
       }
       else if (this.currentAttack.name === "marthDownAir") {
-        this.newAnimation = "downAir";
+        this.animationSpeed = 3.9;
+        newAnimation = "downAir";
+      }
+      else {
+        this.animationSpeed = 8;
+        newAnimation = "idle";
       }
     }
 
@@ -1484,7 +1577,8 @@ class Player {
               attack.offsetY, attack.width, attack.height, attack.damage, 
               attack.startingFrames, attack.activeFrames, attack.endingFrames, 
               attack.angle, attack.knockback, attack.growthKnockback, attack.shieldStun, 
-              attack.transitionFrame, attack.autoTransition);
+              attack.transitionFrame, attack.autoTransition, attack.landingLag,
+              attack.autoCancelStart, attack.autoCancelEnd);
             this.currentAttack.hasHit = false;
   
             // Play sound
@@ -1507,7 +1601,8 @@ class Player {
               attack.offsetY, attack.width, attack.height, attack.damage, 
               attack.startingFrames, attack.activeFrames, attack.endingFrames, 
               attack.angle, attack.knockback, attack.growthKnockback, attack.shieldStun, 
-              attack.transitionFrame, attack.autoTransition);
+              attack.transitionFrame, attack.autoTransition, attack.landingLag,
+              attack.autoCancelStart, attack.autoCancelEnd);
             this.currentAttack.hasHit = false;
   
             // Play sound
@@ -1825,7 +1920,8 @@ class Player {
       attackSequence[0].offsetY, attackSequence[0].width, attackSequence[0].height, attackSequence[0].damage, 
       attackSequence[0].startingFrames, attackSequence[0].activeFrames, attackSequence[0].endingFrames, 
       attackSequence[0].angle, attackSequence[0].knockback, attackSequence[0].growthKnockback, attackSequence[0].shieldStun, 
-      attackSequence[0].transitionFrame, attackSequence[0].autoTransition);
+      attackSequence[0].transitionFrame, attackSequence[0].autoTransition, attackSequence[0].landingLag,
+      attackSequence[0].autoCancelStart, attackSequence[0].autoCancelEnd);
     this.currentAttack.hasHit = false;
 
     // Change to proper attack state
@@ -1895,7 +1991,8 @@ class Player {
 class Attack {
   constructor(name, playerDirection, playerX, playerY, attackOffsetX, attackOffsetY, attackWidth, 
     attackHeight, attackDamage, attackStartingFrames, attackActiveFrames, attackEndingFrames, attackAngle, 
-    attackBaseKnockback, attackGrowthKnockBack, attackShieldStun, attackTransitionFrame, attackAutoTransition, attackLandingLag, attackAutoCancelStart, attackAutoCancelEnd) {
+    attackBaseKnockback, attackGrowthKnockBack, attackShieldStun, attackTransitionFrame, attackAutoTransition, 
+    attackLandingLag, attackAutoCancelStart, attackAutoCancelEnd) {
 
     // Hitbox and size
     this.name = name;
@@ -2295,9 +2392,6 @@ function draw() {
   else if (gameState === "starting") {
 
     menuMusic.stop();
-    if (!backgroundMusic.isPlaying()) {
-      backgroundMusic.loop();
-    }
 
     // Display background
     image(stageBackground, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -2571,6 +2665,9 @@ function keyPressed() {
   else if (gameState === "menu") {
     if (keyCode === P_KEY) {
       gameState = "starting";
+      if (!backgroundMusic.isPlaying()) {
+        backgroundMusic.loop();
+      }   
     }
     else if (keyCode === C_KEY) {
       gameState = "controls";
