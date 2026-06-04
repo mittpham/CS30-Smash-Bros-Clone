@@ -70,6 +70,8 @@ const PLAYER_TEXT_SIZE = 20;
 const BUFFER_WINDOW = 9;
 const MARTH_ICON_SCALE_FACTOR = 0.2;
 const MARTH_ICON_GAP = 135;
+const ZERO_OPACITY = 255;
+const INCREASED_OPACITY = 150;
 
 let winner = null;
 
@@ -91,9 +93,9 @@ let playerOneControls = {
   up: 69, // E key
   down: 83, // S key
   shortHop: 81, // Q key
-  attack: 85, // U key
-  forwardTilt: 89, // Y key
-  special: 72, // H key
+  attack: 84, // T key
+  forwardTilt: 85, // U key
+  special: 89, // Y key
 };
 
 // Player 2 constants and variables
@@ -111,12 +113,12 @@ let playerTwoControls = {
   left: 37, // Left arrow
   right: 39, // Right arrow
   jump: 38, // Up arrow
-  up: 33, // Page up / Numberpad 9
+  up: 35, // End key / Numberpad 1
   down: 40, // Down arrow
-  shortHop: 36, // Home key / Numberpad 7
-  attack: 191, // Slash key
-  forwardTilt: 16, // Shift key
-  special: 222,  // ' Key
+  shortHop: 16, // Shift key
+  attack: 45, // Insert key / Numberpad 0
+  forwardTilt: 13, // Enter key
+  special: 46,  // Delete key / Numberpad .
 };
 
 // Stage constants and variables
@@ -182,6 +184,7 @@ let marthSquatOne;
 let marthRiseOne;
 let koOne;
 let finalKoOne;
+let marthUpSpecialOne;
 
 // Player two
 let marthAppearTwo;
@@ -199,6 +202,7 @@ let marthSquatTwo;
 let marthRiseTwo;
 let koTwo;
 let finalKoTwo;
+let marthUpSpecialTwo;
 
 // Marth stats
 let playerOneMarthStats = {
@@ -221,6 +225,7 @@ let playerOneMarthStats = {
   crouchHeight: 40,
   offsetCrouchHeight: 10,
   name: "P1",
+  upSpecialPower: -17,
 };
 
 let playerTwoMarthStats = {
@@ -243,6 +248,7 @@ let playerTwoMarthStats = {
   crouchHeight: 40,
   offsetCrouchHeight: 10,
   name: "P2",
+  upSpecialPower: -17,
 };
 
 // Marth attacks
@@ -468,6 +474,28 @@ let marthUpAir = {
   landingLag: 8,
   autoCancelStart: 2,
   autoCancelEnd: 38,
+};
+
+// Up special
+let marthUpSpecial = {
+  name: "marthUpSpecial",
+  offsetX: 30,
+  offsetY: 0,
+  width: 70,
+  height: 120,
+  startingFrames: 5,
+  activeFrames: 6,
+  endingFrames: 0,
+  damage: 11,
+  angle: -74,
+  knockback: 70,
+  growthKnockback: 90,
+  shieldStun: 10,
+  transitionFrame: null,
+  autoTransition: false,
+  landingLag: 24,
+  autoCancelStart: 0,
+  autoCancelEnd: 999,
 };
 
 // Create the base player
@@ -807,6 +835,12 @@ class Player {
 
     // Draw the frame
     imageMode(CORNER);
+    if (this.invincible) {
+      tint(255, INCREASED_OPACITY);
+    }
+    else {
+      tint(255, ZERO_OPACITY);
+    }
     image(marthSheet, 
       -offsetX, -offsetY, 
       croppedW, croppedH, 
@@ -876,7 +910,7 @@ class Player {
       newAnimation = "jumping";
     }
     else if (this.state === "landing") {
-      this.animationSpeed = 1;
+      this.animationSpeed = 2.4;
       newAnimation = "landing";
     }
     else if (this.state === "entrance") {
@@ -1104,7 +1138,7 @@ class Player {
       }
       // Reset the hit flag
       else {
-        hurtbox.hasHit = false;
+        this.currentAttack.hasHit = false;
       }
     }
   }
@@ -1118,9 +1152,9 @@ class Player {
 
       // State behavior
       this.addFriction();
-      if (!this.invincible) {
-        this.stats.color = "blue";
-      }
+      // if (!this.invincible) {
+      //   this.stats.color = "blue";
+      // }
 
       // State flags
       this.fastFalling = false;
@@ -1180,9 +1214,9 @@ class Player {
       // State Behavior
       this.groundMovement();
       this.addFriction();
-      if (!this.invincible) {
-        this.stats.color = "purple";
-      }
+      // if (!this.invincible) {
+      //   this.stats.color = "purple";
+      // }
 
       // State flags
       this.fastFalling = false;
@@ -1241,9 +1275,9 @@ class Player {
 
       // State behaviours
       this.addFriction();
-      if (!this.invincible) {
-        this.stats.color = "orange";
-      }
+      // if (!this.invincible) {
+      //   this.stats.color = "orange";
+      // }
 
       // State triggers
       if (!keyIsDown(this.controls.down)) {
@@ -1275,9 +1309,9 @@ class Player {
 
       // State behavior
       this.airMovement();
-      if (!this.fastFalling && !this.invincible) {
-        this.stats.color = "pink";
-      }
+      // if (!this.fastFalling && !this.invincible) {
+      //   this.stats.color = "pink";
+      // }
 
       // State triggers
       if (this.touchingTop) {
@@ -1369,9 +1403,9 @@ class Player {
 
       // Start timer
       this.landingLagTimer--;
-      if (!this.invincible) {
-        this.stats.color = "red";
-      }
+      // if (!this.invincible) {
+      //   this.stats.color = "red";
+      // }
 
       // State triggers
       if (this.landingLagTimer <= 0) {
@@ -1751,7 +1785,57 @@ class Player {
 
       break;
 
-    // dead state behavior
+    // specialFall state behavoir and triggers
+    case "specialFall":
+
+      // State behavior
+      this.airMovement();
+
+      let landingLag = this.currentAttack.landingLag;
+
+      // State triggers
+
+      if (this.touchingTop) {
+        this.state = "landing";
+
+        // Set the landing lag
+        this.landingLagTimer = landingLag;
+
+        // Remove the attack
+        this.hitboxes = [];
+        this.currentAttack = null;
+
+        // Reset velocity and snap to stage
+        this.velocity.y = 0;
+        this.position.y = STAGE_Y - this.stats.currentHeight / 2;
+        this.upSpecialAvailable = true;
+      }
+
+      if (this.position.x > RIGHT_BLAST_ZONE || this.position.x < LEFT_BLAST_ZONE || this.position.y > BOTTOM_BLAST_ZONE || this.position.y < TOP_BLAST_ZONE) {
+        this.state = "dead";
+        if (this.stocks > 0) {
+          this.stocks--;
+
+          // Play death sound
+          if (this.stocks === 0) {
+            this.playSound("finalKo");
+          }
+          else {
+            this.playSound("ko");
+          }
+        }
+      }
+
+      if (this.hitstunTimer > 0) {
+        this.state = "hitstun";
+        this.hitboxes = [];
+        this.currentAttack = null;
+        this.transitionWindowOpen = false;
+        this.multihitBuffer = 0;
+      }
+      break;
+
+    // dead state behavior and triggers
     case "dead":
 
       // State behavior
@@ -1788,9 +1872,9 @@ class Player {
     case "hitstun":
 
       // State behavior
-      if (!this.invincible) {
-        this.stats.color = "red";
-      }
+      // if (!this.invincible) {
+      //   this.stats.color = "red";
+      // }
 
       if (this.touchingTop) {
         this.addFriction();
@@ -1856,12 +1940,26 @@ class Player {
 
     // Move right
     if (keyIsDown(this.controls.right)) {
-      this.acceleration.add(this.stats.airAcceleration, 0);
+      
+      // Move in the air differently depending on the state
+      if (this.state === "airborne" || this.state === "airAttacking" || this.state === "multihitAttacking") {
+        this.acceleration.add(this.stats.airAcceleration, 0);
+      }
+      else if (this.state === "specialFall") {
+        this.acceleration.add(this.stats.airAcceleration * 0.3, 0);
+      }
     }
 
     // Move left
     if (keyIsDown(this.controls.left)) {
-      this.acceleration.add(-this.stats.airAcceleration, 0);
+
+      // Move in the air differently depending on the state
+      if (this.state === "airborne" || this.state === "airAttacking" || this.state === "multihitAttacking") {
+        this.acceleration.add(-this.stats.airAcceleration, 0);
+      }
+      else if (this.state === "specialFall") {
+        this.acceleration.add(-this.stats.airAcceleration * 0.3, 0);
+      }
     }
   }
 
@@ -1872,18 +1970,18 @@ class Player {
     if (this.velocity.y >= 0) {
       this.fastFalling = true;
 
-      if (this.fastFalling && !this.invincible) {
-        this.stats.color = "green";
-      }
+      // if (this.fastFalling && !this.invincible) {
+      //   this.stats.color = "green";
+      // }
     }
   }
 
   // Pause before the player jumps
   prepareGroundJump() {
     this.jumpSquatTimer--;
-    if (!this.invincible) {
-      this.stats.color = "red";
-    }
+    // if (!this.invincible) {
+    //   this.stats.color = "red";
+    // }
     if (this.jumpSquatTimer <= 0) {
       this.jumpSquatting = false;
       this.groundJump();
@@ -1916,7 +2014,7 @@ class Player {
 
   // Double jump
   doubleJump() {
-    if (this.doubleJumpAvailable) {
+    if (this.doubleJumpAvailable && this.upSpecialAvailable) {
       this.velocity.y = this.stats.doubleJumpPower;
 
       // Play sound
@@ -1995,6 +2093,33 @@ class Player {
     this.playSound("swing");
   }
 
+  // Create a special attack
+  spawnSpecial(attack) {
+
+    // Prevent infinite specials
+    if (this.upSpecialAvailable) {
+
+      // Make the players current attack a new instance
+      this.currentAttack = new Attack(attack.name, this.direction, this.position.x, this.position.y, attack.offsetX, 
+        attack.offsetY, attack.width, attack.height, attack.damage, 
+        attack.startingFrames, attack.activeFrames, attack.endingFrames, 
+        attack.angle, attack.knockback, attack.growthKnockback, attack.shieldStun, attack.transitionFrame, 
+        attack.autoTransition, attack.landingLag, attack.autoCancelStart, attack.autoCancelEnd);
+  
+      // Propel the player up
+      this.velocity.y = this.stats.upSpecialPower;
+  
+      this.currentAttack.hasHit = false;
+  
+      // Change to proper attack state
+      this.state = "specialFall";
+      this.upSpecialAvailable = false;
+  
+      // Play sound
+      this.playSound("upSpecial");
+    }
+  }
+
   // Reset player if dead
   resetPlayer() {
 
@@ -2013,6 +2138,7 @@ class Player {
     this.currentAttack = null;
     this.multihitAir = false;
     this.transitionWindowOpen = false;
+    this.upSpecialAvailable = true;
     gameAnnouncerPlayed = false;
 
     // Reset timers
@@ -2035,9 +2161,9 @@ class Player {
     this.velocity.mult(0);
 
     // Make player white to show invincibility
-    if (this.invincible) {
-      this.stats.color = "white";
-    }
+    // if (this.invincible) {
+    //   this.stats.color = "white";
+    // }
   }
 
   // Manage the sounds of the player
@@ -2352,6 +2478,7 @@ function preload() {
   marthRiseOne = loadSound("assets/marth/sounds/marthrise.mp3");
   koOne = loadSound("assets/marth/sounds/ko.mp3");
   finalKoOne = loadSound("assets/marth/sounds/finalko.mp3");
+  marthUpSpecialOne = loadSound("assets/marth/sounds/marthupspecial.mp3");
 
   // Player 2 sounds
   marthAppearTwo = loadSound("assets/marth/sounds/marthappear.mp3");
@@ -2367,6 +2494,7 @@ function preload() {
   marthRiseTwo = loadSound("assets/marth/sounds/marthrise.mp3");
   koTwo = loadSound("assets/marth/sounds/ko.mp3");
   finalKoTwo = loadSound("assets/marth/sounds/finalko.mp3");
+  marthUpSpecialTwo = loadSound("assets/marth/sounds/marthupspecial.mp3");
 
   // Stage sprites
   stageSprite = loadImage("assets/stage/stagesprite.png");
@@ -2400,6 +2528,7 @@ function setup() {
     swing: marthSwingOne,
     ko: koOne,
     finalKo: finalKoOne,
+    upSpecial: marthUpSpecialOne,
   };
   
   // Player 2 sounds
@@ -2417,6 +2546,7 @@ function setup() {
     swing: marthSwingTwo,
     ko: koTwo,
     finalKo: finalKoTwo,
+    upSpecial: marthUpSpecialTwo,
   };
 
   // Create player 1
@@ -2614,6 +2744,15 @@ function keyPressed() {
           playerOne.multihitBuffer = playerOne.currentAttack.currentFrame;
         }
       }
+
+      // Special attacks
+      if (keyCode === playerOne.controls.special) {
+
+        // Up special
+        if (keyIsDown(playerOne.controls.up) || keyIsDown(playerOne.controls.jump)) {
+          playerOne.spawnSpecial(marthUpSpecial);
+        }
+      }
     }
   
     // PLAYER TWO CONTROLS
@@ -2722,6 +2861,15 @@ function keyPressed() {
           playerTwo.multihitBuffer = playerTwo.currentAttack.currentFrame;
         }
       }
+
+      // Special attacks
+      if (keyCode === playerTwo.controls.special) {
+
+        // Up special
+        if (keyIsDown(playerTwo.controls.up) || keyIsDown(playerTwo.controls.jump)) {
+          playerTwo.spawnSpecial(marthUpSpecial);
+        }
+      }
     }
   }
 
@@ -2801,16 +2949,18 @@ function displayControls() {
   textSize(CONTROLS_TEXT_SIZE);
   text(`PLAYER ONE CONTROLS:
     WASD movement
-    U attack
-    Y forward tilt
+    T attack
+    Y special
+    U forward tilt
     Q shorthop
     E up
     PLAYER TWO CONTROLS:
     ARROWS movement
-    / attack
-    Shift forward tilt
-    Home shorthop
-    Pageup up
+    0 attack
+    . special
+    Enter forward tilt
+    Shift shorthop
+    1 up
     Press M to go back to the menu`, width / 2, height / 2);
 }
 
