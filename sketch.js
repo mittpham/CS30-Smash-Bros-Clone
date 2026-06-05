@@ -40,10 +40,6 @@
 // https://www.spriters-resource.com/custom_edited/supersmashbroscustoms/asset/196310/ - marth portrait
 // https://www.youtube.com/watch?v=6znq-EYa8C0&list=RD6znq-EYa8C0&start_radio=1 - menu music
 
-// Canvas constants
-const SCREEN_WIDTH = 1440;
-const SCREEN_HEIGHT = 810;
-
 // Universal player variables and constants
 const JUMPSQUAT_TIMER = 3;
 const SOFT_LANDING_LAG_TIMER = 2;
@@ -80,6 +76,13 @@ const PLAYER_ONE_SPAWN_Y = 200;
 const PLAYER_ONE_STOCK_X = 2350;
 const PLAYER_ONE_STOCK_Y = 3850;
 const PLAYER_ONE_DIRECTION = true;
+
+let playerOneStartX;
+let playerOneStartY;
+let playerOneSpawnX;
+let playerOneSpawnY;
+let playerOneStockX;
+let playerOneStockY;
 
 let playerOne;
 
@@ -121,15 +124,17 @@ let playerTwoControls = {
 };
 
 // Stage constants and variables
-const STAGE_X = 320;
-const STAGE_Y = 550;
 const STAGE_WIDTH = 800;
 const STAGE_HEIGHT = 50;
+const BLAST_ZONE_GAP = 100;
+const STAGE_Y_OFFSET = 318.5;
 
-const TOP_BLAST_ZONE = -25;
-const BOTTOM_BLAST_ZONE = 860;
-const LEFT_BLAST_ZONE = -25;
-const RIGHT_BLAST_ZONE = 1465;
+let stageX;
+let stageY;
+let topBlastZone;
+let bottomBlastZone;
+let leftBlastZone;
+let rightBlastZone;
 
 let stage;
 
@@ -1235,7 +1240,7 @@ class Player {
         this.doubleJumpAvailable = true;
       }
 
-      if (this.position.x > RIGHT_BLAST_ZONE || this.position.x < LEFT_BLAST_ZONE || this.position.y > BOTTOM_BLAST_ZONE || this.position.y < TOP_BLAST_ZONE) {
+      if (this.position.x > rightBlastZone || this.position.x < leftBlastZone || this.position.y > bottomBlastZone || this.position.y < topBlastZone) {
         this.state = "dead";
         if (this.stocks > 0) {
           this.stocks--;
@@ -1297,7 +1302,7 @@ class Player {
         this.doubleJumpAvailable = true;
       }
 
-      if (this.position.x > RIGHT_BLAST_ZONE || this.position.x < LEFT_BLAST_ZONE || this.position.y > BOTTOM_BLAST_ZONE || this.position.y < TOP_BLAST_ZONE) {
+      if (this.position.x > rightBlastZone || this.position.x < leftBlastZone || this.position.y > bottomBlastZone || this.position.y < topBlastZone) {
         this.state = "dead";
         if (this.stocks > 0) {
           this.stocks--;
@@ -1380,10 +1385,10 @@ class Player {
 
         // Reset velocity and snap to stage
         this.velocity.y = 0;
-        this.position.y = STAGE_Y - this.stats.currentHeight / 2;
+        this.position.y = stageY - this.stats.currentHeight / 2;
       }
 
-      if (this.position.x > RIGHT_BLAST_ZONE || this.position.x < LEFT_BLAST_ZONE || this.position.y > BOTTOM_BLAST_ZONE || this.position.y < TOP_BLAST_ZONE) {
+      if (this.position.x > rightBlastZone || this.position.x < leftBlastZone || this.position.y > bottomBlastZone || this.position.y < topBlastZone) {
         this.state = "dead";
         if (this.stocks > 0) {
           this.stocks--;
@@ -1420,7 +1425,7 @@ class Player {
         this.state = "airborne";
       }
 
-      if (this.position.x > RIGHT_BLAST_ZONE || this.position.x < LEFT_BLAST_ZONE || this.position.y > BOTTOM_BLAST_ZONE || this.position.y < TOP_BLAST_ZONE) {
+      if (this.position.x > rightBlastZone || this.position.x < leftBlastZone || this.position.y > bottomBlastZone || this.position.y < topBlastZone) {
         this.state = "dead";
         if (this.stocks > 0) {
           this.stocks--;
@@ -1472,7 +1477,7 @@ class Player {
         this.jumpSquatTimer = JUMPSQUAT_TIMER;
       }
 
-      if (this.position.x > RIGHT_BLAST_ZONE || this.position.x < LEFT_BLAST_ZONE || this.position.y > BOTTOM_BLAST_ZONE || this.position.y < TOP_BLAST_ZONE) {
+      if (this.position.x > rightBlastZone || this.position.x < leftBlastZone || this.position.y > bottomBlastZone || this.position.y < topBlastZone) {
         this.state = "dead";
         if (this.stocks > 0) {
           this.stocks--;
@@ -1521,7 +1526,7 @@ class Player {
         this.state = "idle";
       }
 
-      if (this.position.x > RIGHT_BLAST_ZONE || this.position.x < LEFT_BLAST_ZONE || this.position.y > BOTTOM_BLAST_ZONE || this.position.y < TOP_BLAST_ZONE) {
+      if (this.position.x > rightBlastZone || this.position.x < leftBlastZone || this.position.y > bottomBlastZone || this.position.y < topBlastZone) {
         this.state = "dead";
         if (this.stocks > 0) {
           this.stocks--;
@@ -1578,7 +1583,7 @@ class Player {
         }
       }
 
-      if (this.position.x > RIGHT_BLAST_ZONE || this.position.x < LEFT_BLAST_ZONE || this.position.y > BOTTOM_BLAST_ZONE || this.position.y < TOP_BLAST_ZONE) {
+      if (this.position.x > rightBlastZone || this.position.x < leftBlastZone || this.position.y > bottomBlastZone || this.position.y < topBlastZone) {
         this.state = "dead";
         if (this.stocks > 0) {
           this.stocks--;
@@ -1643,7 +1648,7 @@ class Player {
           
           // Reset velocity and snap to stage
           this.velocity.y = 0;
-          this.position.y = STAGE_Y - this.stats.currentHeight / 2;
+          this.position.y = stageY - this.stats.currentHeight / 2;
           
           
           // Determine the endlag based on the current frame
@@ -1669,7 +1674,7 @@ class Player {
         }
       }
 
-      if (this.position.x > RIGHT_BLAST_ZONE || this.position.x < LEFT_BLAST_ZONE || this.position.y > BOTTOM_BLAST_ZONE || this.position.y < TOP_BLAST_ZONE) {
+      if (this.position.x > rightBlastZone || this.position.x < leftBlastZone || this.position.y > bottomBlastZone || this.position.y < topBlastZone) {
         this.state = "dead";
         if (this.stocks > 0) {
           this.stocks--;
@@ -1802,7 +1807,7 @@ class Player {
           
           // Reset velocity and snap to stage
           this.velocity.y = 0;
-          this.position.y = STAGE_Y - this.stats.currentHeight / 2;
+          this.position.y = stageY - this.stats.currentHeight / 2;
           
           
           // Determine the endlag based on the current frame
@@ -1823,7 +1828,7 @@ class Player {
         this.state = "airborne";
       }
 
-      if (this.position.x > RIGHT_BLAST_ZONE || this.position.x < LEFT_BLAST_ZONE || this.position.y > BOTTOM_BLAST_ZONE || this.position.y < TOP_BLAST_ZONE) {
+      if (this.position.x > rightBlastZone || this.position.x < leftBlastZone || this.position.y > bottomBlastZone || this.position.y < topBlastZone) {
         this.state = "dead";
         if (this.stocks > 0) {
           this.stocks--;
@@ -1876,11 +1881,11 @@ class Player {
 
         // Reset velocity and snap to stage
         this.velocity.y = 0;
-        this.position.y = STAGE_Y - this.stats.currentHeight / 2;
+        this.position.y = stageY - this.stats.currentHeight / 2;
         this.upSpecialAvailable = true;
       }
 
-      if (this.position.x > RIGHT_BLAST_ZONE || this.position.x < LEFT_BLAST_ZONE || this.position.y > BOTTOM_BLAST_ZONE || this.position.y < TOP_BLAST_ZONE) {
+      if (this.position.x > rightBlastZone || this.position.x < leftBlastZone || this.position.y > bottomBlastZone || this.position.y < topBlastZone) {
         this.state = "dead";
         if (this.stocks > 0) {
           this.stocks--;
@@ -2437,7 +2442,8 @@ class Stage {
 
     // Animation stage properties
     this.animationHeight = 300;
-    this.animationY = 515;
+    this.animationX = windowWidth / 2;
+    this.animationY = windowHeight - 200;
 
     // Animation properties
     this.frameWidth = 456;
@@ -2452,15 +2458,16 @@ class Stage {
   display(playerOne, playerTwo) {
 
     // Hitbox
-    // rectMode(CORNER);
-    // fill("white");
-    // rect(this.x, this.y, this.w, this.h);
+    rectMode(CORNER);
+    fill("white");
+    rect(this.x, this.y, this.w, this.h);
 
     // Shuffle through frames
     let frameX = this.currentFrame * this.frameWidth;
     
     // Show the stage
-    image(stageSprite, this.x, this.animationY, this.w, this.animationHeight, 
+    imageMode(CENTER);
+    image(stageSprite, this.animationX, this.animationY, this.w, this.animationHeight, 
       frameX, 0, this.frameWidth, this.frameHeight); 
     
     // Show the players percent
@@ -2494,7 +2501,7 @@ class Stage {
 
     // Show the players
     textSize(PLAYER_NAME_TEXT_SIZE);
-    text("PLAYER 1", PLAYER_ONE_START_X, DAMAGE_METER_Y + DAMAGE_METER_GAP);
+    text("PLAYER 1", playerOneStartX, DAMAGE_METER_Y + DAMAGE_METER_GAP);
     text("PLAYER 2", PLAYER_TWO_START_X, DAMAGE_METER_Y + DAMAGE_METER_GAP);
 
     // Show the percent
@@ -2502,20 +2509,22 @@ class Stage {
     let playerOnePercent = String(playerOne.percentage);
     let playerTwoPercent = String(playerTwo.percentage);
 
-    text(playerOnePercent + "%", PLAYER_ONE_START_X, DAMAGE_METER_Y);
+    text(playerOnePercent + "%", playerOneStartX, DAMAGE_METER_Y);
     text(playerTwoPercent + "%", PLAYER_TWO_START_X, DAMAGE_METER_Y);
 
     // Show the stocks
     for (let i = 0; i < playerOne.stocks; i++) {
       push();
       scale(MARTH_ICON_SCALE_FACTOR, MARTH_ICON_SCALE_FACTOR);
-      image(marthIcon, PLAYER_ONE_STOCK_X + i * MARTH_ICON_GAP, PLAYER_ONE_STOCK_Y);
+      imageMode(CORNER);
+      image(marthIcon, playerOneStockX + i * MARTH_ICON_GAP, playerOneStockX);
       pop();
     }
 
     for (let i = 0; i < playerTwo.stocks; i++) {
       push();
       scale(MARTH_ICON_SCALE_FACTOR, MARTH_ICON_SCALE_FACTOR);
+      imageMode(CORNER);
       image(marthIcon, PLAYER_TWO_STOCK_X + i * MARTH_ICON_GAP, PLAYER_TWO_STOCK_Y);
       pop();
     }
@@ -2577,7 +2586,7 @@ function preload() {
 
 // Setup player
 function setup() {
-  createCanvas(SCREEN_WIDTH, SCREEN_HEIGHT);
+  createCanvas(windowWidth, windowHeight);
 
   // Start background music
   backgroundMusic.setVolume(0.1);
@@ -2619,16 +2628,39 @@ function setup() {
     upSpecial: marthUpSpecialTwo,
   };
 
+  // Set the stage position and blast zones
+  stageX = windowWidth / 2 - STAGE_WIDTH / 2;
+  stageY = windowHeight - STAGE_Y_OFFSET;
+  topBlastZone = -BLAST_ZONE_GAP;
+  leftBlastZone = -BLAST_ZONE_GAP;
+  bottomBlastZone = windowHeight + BLAST_ZONE_GAP;
+  rightBlastZone = windowWidth + BLAST_ZONE_GAP;
+
+  // Set up player positions
+  playerOneStartX = windowWidth / 2 - 200;
+  playerOneStartY = windowHeight - STAGE_Y_OFFSET;
+  playerOneSpawnX = playerOneStartX;
+  playerOneSpawnY = 300;
+  playerOneStockX = 3000;
+  playerOneStockY = 3850;
+  
+  playerTwoStartX = windowWidth / 2 + 200;
+  playerTwoStartY = windowHeight - STAGE_Y_OFFSET;
+  playerTwoSpawnX = playerTwoStartX;
+  playerTwoSpawnY = 300;
+  playerTwoStockX = 3500;
+  playerTwoStockY = 3850;
+
   // Create player 1
-  playerOne = new Player(PLAYER_ONE_START_X, PLAYER_ONE_START_Y - playerOneMarthStats.currentHeight / 2, 
-    playerOneMarthStats, playerOneControls, playerOneSounds, PLAYER_ONE_SPAWN_X, PLAYER_ONE_SPAWN_Y, PLAYER_ONE_DIRECTION);
+  playerOne = new Player(playerOneStartX, playerOneStartY - playerOneMarthStats.currentHeight / 2, 
+    playerOneMarthStats, playerOneControls, playerOneSounds, playerOneSpawnX, playerOneSpawnY, PLAYER_ONE_DIRECTION);
 
   // Create player 2
   playerTwo = new Player(PLAYER_TWO_START_X, PLAYER_TWO_START_Y - playerTwoMarthStats.currentHeight / 2, 
     playerTwoMarthStats, playerTwoControls, playerTwoSounds, PLAYER_TWO_SPAWN_X, PLAYER_TWO_SPAWN_Y, PLAYER_TWO_DIRECTION);
 
   // Create stage
-  stage = new Stage(STAGE_X, STAGE_Y, STAGE_WIDTH, STAGE_HEIGHT, 100);
+  stage = new Stage(stageX, stageY, STAGE_WIDTH, STAGE_HEIGHT, 100);
 }
 
 // Manage players
@@ -2663,7 +2695,8 @@ function draw() {
     menuMusic.stop();
 
     // Display background
-    image(stageBackground, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+    imageMode(CORNER);
+    image(stageBackground, 0, 0, windowWidth, windowHeight);
 
     // Show countdown
     countDown();
@@ -2673,7 +2706,8 @@ function draw() {
   else if (gameState === "playing") {
 
     // Display background
-    image(stageBackground, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+    imageMode(CORNER);
+    image(stageBackground, 0, 0, windowWidth, windowHeight);
 
     noStroke();
   
@@ -3003,7 +3037,7 @@ function keyPressed() {
       playerTwo.resetPlayer();
       playerOne.state = "entrance";
       playerTwo.state = "entrance";
-      playerOne.position.set(PLAYER_ONE_START_X, PLAYER_ONE_START_Y - playerOneMarthStats.currentHeight / 2);
+      playerOne.position.set(playerOneStartX, playerOneStartY - playerOneMarthStats.currentHeight / 2);
       playerTwo.position.set(PLAYER_TWO_START_X, PLAYER_TWO_START_Y - playerTwoMarthStats.currentHeight / 2);
       playerOne.velocity.set(0, 0);
       playerTwo.velocity.set(0, 0);
@@ -3063,13 +3097,6 @@ function displayControls() {
 // Start the countdown before the game starts
 function countDown() {
 
-  // Define style
-  fill("white");
-  stroke("black");
-  rectMode(CENTER);
-  textAlign(CENTER, CENTER);
-  textSize(COUNTDOWN_TEXT_SIZE);
-
   // Start countdown
   countdownTimer--;
 
@@ -3081,8 +3108,7 @@ function countDown() {
 
   // Show correct number
   if (countdownTimer > THREE_SECOND_MARK) {
-    text("3", width / 2, height / 2);
-
+    
     // Play sound
     if (!entranceSound.isPlaying()) {
       entranceSound.play();
@@ -3097,10 +3123,17 @@ function countDown() {
     playerOne.updateAnimation();
     playerTwo.display();
     playerTwo.updateAnimation();
+
+    // Define style
+    fill("white");
+    stroke("black");
+    rectMode(CENTER);
+    textAlign(CENTER, CENTER);
+    textSize(COUNTDOWN_TEXT_SIZE);
+    text("3", width / 2, height / 2);
   }
   else if (countdownTimer > TWO_SECOND_MARK) {
-    text("2", width / 2, height / 2);
-
+  
     // Draw stage
     stage.update();
     stage.display(playerOne, playerTwo);
@@ -3112,9 +3145,16 @@ function countDown() {
     playerTwo.state = "idle";
     playerTwo.display();
     playerTwo.updateAnimation();
+
+    // Define style
+    fill("white");
+    stroke("black");
+    rectMode(CENTER);
+    textAlign(CENTER, CENTER);
+    textSize(COUNTDOWN_TEXT_SIZE);
+    text("2", width / 2, height / 2);
   }
   else if (countdownTimer > ONE_SECOND_MARK) {
-    text("1", width / 2, height / 2);
 
     // Draw stage
     stage.update();
@@ -3125,26 +3165,40 @@ function countDown() {
     playerOne.updateAnimation();
     playerTwo.display();
     playerTwo.updateAnimation();
+
+    // Define style
+    fill("white");
+    stroke("black");
+    rectMode(CENTER);
+    textAlign(CENTER, CENTER);
+    textSize(COUNTDOWN_TEXT_SIZE);
+    text("1", width / 2, height / 2);
   }
   else if (countdownTimer > GO_MARK) {
-    text("GO!", width / 2, height / 2);
-
     noStroke();
-  
+    
     // Draw stage
     stage.update();
     stage.display(playerOne, playerTwo);
-  
+    
     // Update player states and movement
     playerOne.update(playerTwo);
     playerTwo.update(playerOne);  
-  
+    
     // Check for collision between players and attacks
     playerCollisions(playerOne, playerTwo);
-  
+    
     // Display player
     playerOne.display();
     playerTwo.display();
+
+    // Define style
+    fill("white");
+    stroke("black");
+    rectMode(CENTER);
+    textAlign(CENTER, CENTER);
+    textSize(COUNTDOWN_TEXT_SIZE);
+    text("GO!", width / 2, height / 2);
   }
   else {
     countdownAnnouncer.stop();
