@@ -40,9 +40,6 @@
 // https://www.spriters-resource.com/custom_edited/supersmashbroscustoms/asset/196310/ - marth portrait
 // https://www.youtube.com/watch?v=6znq-EYa8C0&list=RD6znq-EYa8C0&start_radio=1 - menu music
 
-// Things to do:
-// nair 1 is missing
-
 // Canvas constants
 const SCREEN_WIDTH = 1440;
 const SCREEN_HEIGHT = 810;
@@ -55,7 +52,7 @@ const SPAWNING_TIMER = 30;
 const INVINCIBILITY_TIMER = 120;
 const ANGEL_PLATFORM_TIMER = 300;
 const PLAYER_STOCKS = 3;
-const KNOCKBACK_MULTIPLIER = 0.2;
+const KNOCKBACK_MULTIPLIER = 0.15;
 const HITSTUN_MULTIPLIER = 0.4;
 const SAKURAI_SPECIAL_ANGLE = 361;
 const LOW_KNOCKBACK_ANGLE = 0;
@@ -82,6 +79,7 @@ const PLAYER_ONE_SPAWN_X = 520;
 const PLAYER_ONE_SPAWN_Y = 200;
 const PLAYER_ONE_STOCK_X = 2350;
 const PLAYER_ONE_STOCK_Y = 3850;
+const PLAYER_ONE_DIRECTION = true;
 
 let playerOne;
 
@@ -105,6 +103,7 @@ const PLAYER_TWO_SPAWN_X = 920;
 const PLAYER_TWO_SPAWN_Y = 200;
 const PLAYER_TWO_STOCK_X = 4350;
 const PLAYER_TWO_STOCK_Y = 3850;
+const PLAYER_TWO_DIRECTION = false;
 
 let playerTwo;
 
@@ -128,7 +127,7 @@ const STAGE_WIDTH = 800;
 const STAGE_HEIGHT = 50;
 
 const TOP_BLAST_ZONE = -25;
-const BOTTOM_BLAST_ZONE = 835;
+const BOTTOM_BLAST_ZONE = 860;
 const LEFT_BLAST_ZONE = -25;
 const RIGHT_BLAST_ZONE = 1465;
 
@@ -206,47 +205,47 @@ let marthUpSpecialTwo;
 
 // Marth stats
 let playerOneMarthStats = {
-  runSpeed: 4,
+  runSpeed: 3.6,
   initialDash: 5,
   airAcceleration: 1,
-  airSpeed: 2.4,
+  airSpeed: 2,
   friction: 0.886,
   gravity: 0.6,
   fallSpeed: 8,
   fastFallSpeed: 12.8,
-  shortHopPower: -10,
-  fullHopPower: -15,
-  doubleJumpPower: -15,
+  shortHopPower: -8.6,
+  fullHopPower: -13.6,
+  doubleJumpPower: -13.6,
   weight: 90,
   color: "blue",
   width: 40,
-  currentHeight: 60,
-  idleHeight: 60,
+  currentHeight: 80,
+  idleHeight: 80,
   crouchHeight: 40,
-  offsetCrouchHeight: 10,
+  offsetCrouchHeight: 20,
   name: "P1",
-  upSpecialPower: -17,
+  upSpecialPower: -20,
 };
 
 let playerTwoMarthStats = {
-  runSpeed: 4,
+  runSpeed: 3.6,
   initialDash: 5,
   airAcceleration: 1,
-  airSpeed: 2.4,
+  airSpeed: 2,
   friction: 0.886,
   gravity: 0.6,
   fallSpeed: 8,
   fastFallSpeed: 12.8,
-  shortHopPower: -10,
-  fullHopPower: -15,
-  doubleJumpPower: -15,
+  shortHopPower: -8.6,
+  fullHopPower: -13.6,
+  doubleJumpPower: -13.6,
   weight: 90,
   color: "blue",
   width: 40,
-  currentHeight: 60,
-  idleHeight: 60,
+  currentHeight: 80,
+  idleHeight: 80,
   crouchHeight: 40,
-  offsetCrouchHeight: 10,
+  offsetCrouchHeight: 20,
   name: "P2",
   upSpecialPower: -17,
 };
@@ -297,7 +296,7 @@ let marthForwardTilt = {
   name: "marthForwardTilt",
   offsetX: 60,
   offsetY: -10,
-  width: 100,
+  width: 120,
   height: 110,
   startingFrames: 8,
   activeFrames: 3,
@@ -329,10 +328,10 @@ let marthDownTilt = {
 // Up tilt
 let marthUpTilt = {
   name: "marthUpTilt",
-  offsetX: 0,
-  offsetY: -40,
+  offsetX: 20,
+  offsetY: -10,
   width: 120,
-  height: 140,
+  height: 120,
   startingFrames: 6,
   activeFrames: 6,
   endingFrames: 21,
@@ -358,7 +357,7 @@ let marthNeutralAirOne = {
   knockback: 35,
   growthKnockback: 50,
   shieldStun: 3,
-  transitionFrame: 7,
+  transitionFrame: 8,
   autoTransition: true,
   landingLag: 7,
   autoCancelStart: 0,
@@ -367,10 +366,10 @@ let marthNeutralAirOne = {
 
 let marthNeutralAirTwo = {
   name: "marthNeutralAirTwo",
-  offsetX: 0,
-  offsetY: 0,
+  offsetX: 20,
+  offsetY: 10,
   width: 150,
-  height: 30,
+  height: 50,
   startingFrames: 8,
   activeFrames: 6,
   endingFrames: 28,
@@ -393,8 +392,8 @@ let marthForwardAir = {
   name: "marthForwardAir",
   offsetX: 60,
   offsetY: 0,
-  width: 120,
-  height: 130,
+  width: 80,
+  height: 100,
   startingFrames: 6,
   activeFrames: 2,
   endingFrames: 29,
@@ -413,10 +412,10 @@ let marthForwardAir = {
 // Back air
 let marthBackAir = {
   name: "marthBackAir",
-  offsetX: -40,
+  offsetX: -50,
   offsetY: 0,
-  width: 100,
-  height: 100,
+  width: 140,
+  height: 120,
   startingFrames: 7,
   activeFrames: 4,
   endingFrames: 28,
@@ -436,7 +435,7 @@ let marthBackAir = {
 let marthDownAir = {
   name: "marthDownAir",
   offsetX: 0,
-  offsetY: 60,
+  offsetY: 30,
   width: 120,
   height: 120,
   startingFrames: 9,
@@ -459,8 +458,8 @@ let marthUpAir = {
   name: "marthUpAir",
   offsetX: 0,
   offsetY: -40,
-  width: 110,
-  height: 110,
+  width: 120,
+  height: 100,
   startingFrames: 5,
   activeFrames: 4,
   endingFrames: 36,
@@ -480,14 +479,14 @@ let marthUpAir = {
 let marthUpSpecial = {
   name: "marthUpSpecial",
   offsetX: 30,
-  offsetY: 0,
+  offsetY: -20,
   width: 70,
-  height: 120,
+  height: 140,
   startingFrames: 5,
   activeFrames: 6,
   endingFrames: 0,
   damage: 11,
-  angle: -74,
+  angle: -35,
   knockback: 70,
   growthKnockback: 90,
   shieldStun: 10,
@@ -519,16 +518,19 @@ class Player {
     this.sounds = sounds;
 
     // States
-    this.state = "entrance"; // idle, running, crouching, airborne, jumpsquat, landing, dead, spawning, attacking, crouchAttacking, airAttacking, multihitAttacking, hitstun, entrance
+    this.state = "entrance"; 
+    // idle, running, crouching, airborne, jumpsquat, landing, dead, spawning, attacking, 
+    // crouchAttacking, airAttacking, multihitAttacking, hitstun, entrance, specialFall
 
     // Flags/Conditions
     this.direction = direction;
+    this.spawnDirection = direction;
     this.jumpSquatting = false;
     this.jumpAvailable = true;
     this.doubleJumpAvailable = false;
     this.fastFalling = false;
     this.invincible = false;
-    this.touchingTop = false;
+    this.touchingTop = true;
     this.touchingLeft = false;
     this.touchingRight = false;
     this.touchingBottom = false;
@@ -545,6 +547,7 @@ class Player {
     this.attackFrameTimer = 0;
     this.hitstunTimer = 0;
     this.multihitBuffer = 0;
+    this.upSpecialLag = marthUpSpecial.landingLag;
 
     // Animation properties
     this.currentFrame = 0;
@@ -589,14 +592,14 @@ class Player {
     ]);
 
     this.animations.set("doubleJumping", [
-      [[57, 667, 48, 57], [80, 691]],
-      [[124, 666, 39, 55], [144, 691]],
-      [[194, 665, 36, 52], [214, 691]],
-      [[257, 673, 46, 55], [282, 688]],
-      [[325, 679, 51, 49], [352, 688]],
-      [[387, 676, 56, 46], [417, 693]],
-      [[455, 666, 60, 40], [491, 696]],
-      [[535, 660, 38, 55], [558, 697]]
+      [[57, 667, 48, 57], [80, 731]],
+      [[124, 666, 39, 55], [144, 731]],
+      [[194, 665, 36, 52], [214, 731]],
+      [[257, 673, 46, 55], [282, 728]],
+      [[325, 679, 51, 49], [352, 728]],
+      [[387, 676, 56, 46], [417, 733]],
+      [[455, 666, 60, 40], [491, 736]],
+      [[535, 660, 38, 55], [558, 737]]
     ]);
 
     this.animations.set("landing", [
@@ -786,23 +789,44 @@ class Player {
       [[1462, 1899, 32, 66], [1472, 1965]],
       [[1561, 1906, 46, 57], [1574, 1963]]
     ]);
+
+    this.animations.set("upSpecial", [
+      // [[62, 2740, 77, 45], [127, 2785]],
+      // [[202, 2721, 58, 65], [241, 2785]],
+      // [[304, 2730, 64, 56], [356, 2786]],
+      // [[435, 2733, 49, 53], [472, 2786]],
+      [[561, 2730, 51, 56], [586, 2786]],
+      [[681, 2728, 71, 58], [700, 2786]],
+      [[796, 2713, 63, 73], [815, 2786]],
+      [[913, 2696, 39, 90], [930, 2786]],
+      [[1030, 2693, 29, 93], [1044, 2786]],
+      [[1131, 2709, 45, 77], [1157, 2785]],
+      [[1255, 2713, 37, 73], [1271, 2785]],
+      [[1382, 2719, 38, 66], [1382, 2785]],
+      [[1497, 2723, 53, 62], [1498, 2785]],
+      [[1614, 2720, 39, 65], [1614, 2785]]
+    ]);
+
+    this.animations.set("specialFall", [
+      [[1715, 2715, 36, 70], [1734, 2784]]
+    ]);
   }
 
   // Display the player and hitboxes
   display() {
 
-    // // Draw player from the center
-    // rectMode(CENTER);
+    // Draw player from the center
+    rectMode(CENTER);
 
-    // // Square to represent the player
-    // noStroke();
-    // fill(this.stats.color);
-    // rect(this.position.x, this.position.y, this.stats.width, this.stats.currentHeight);
+    // Square to represent the player
+    noStroke();
+    fill(this.stats.color);
+    rect(this.position.x, this.position.y, this.stats.width, this.stats.currentHeight);
 
-    // // Draw hitboxes
-    // if (this.currentAttack !== null) {
-    //   this.currentAttack.display();
-    // }
+    // Draw hitboxes
+    if (this.currentAttack !== null) {
+      this.currentAttack.display();
+    }
 
     // Pull the current animation as well as the current frame
     let currentAnimationData = this.animations.get(this.currentAnimation);
@@ -827,10 +851,10 @@ class Player {
     // Flip the animation if the direction is left
     translate(this.position.x, this.position.y + this.stats.currentHeight / 2);
     if (!this.direction) {
-      scale(-1, 1);
+      scale(-1.3, 1.3);
     }
     else {
-      scale(1, 1);
+      scale(1.3, 1.3);
     }
 
     // Draw the frame
@@ -921,6 +945,9 @@ class Player {
       this.animationSpeed = 8;
       newAnimation = "idle";
     }
+    else if (this.state === "specialFall") {
+      newAnimation = "specialFall";
+    }
     else if (this.currentAttack !== null) {
 
       if (this.currentAttack.name === "marthJabOne") {
@@ -963,6 +990,10 @@ class Player {
       else if (this.currentAttack.name === "marthDownAir") {
         this.animationSpeed = 3.9;
         newAnimation = "downAir";
+      }
+      else if (this.currentAttack.name === "marthUpSpecial") {
+        this.animationSpeed = 2;
+        newAnimation = "upSpecial";
       }
       else {
         this.animationSpeed = 8;
@@ -1038,7 +1069,8 @@ class Player {
     if (this.state === "running" || this.state === "idle") {
       this.velocity.x = constrain(this.velocity.x, -this.stats.runSpeed, this.stats.runSpeed);
     }
-    if (this.state === "airborne" || this.state === "airAttacking" || this.state === "multihitAttacking") {
+    if (this.state === "airborne" || this.state === "airAttacking" 
+      || this.state === "multihitAttacking" || this.state === "specialFall") {
       this.velocity.x = constrain(this.velocity.x, -this.stats.airSpeed, this.stats.airSpeed);
     }
   }
@@ -1084,10 +1116,30 @@ class Player {
       }
   
       else if (minimumOverlap === bottomOverlap) {
-        this.touchingBottom = true;
-        this.position.y = stageBottom + this.stats.currentHeight / 2;
-        this.velocity.y = 0;
-        return true;
+
+        // Special case if the player bonks their head into the bottom of the stage
+        if (this.currentAttack !== null && this.currentAttack.name === "marthUpSpecial") {
+
+          // Push the player to the right or left depending on which one is closer
+          if (rightOverlap > leftOverlap) {
+            this.touchingLeft = true;
+            this.position.x = stageLeft - this.stats.width / 2;
+            return true;
+          }
+          else {
+            this.touchingRight = true;
+            this.position.x = stageRight + this.stats.width / 2;
+            return true;
+          }
+        }
+
+        // Regular case
+        else {
+          this.touchingBottom = true;
+          this.position.y = stageBottom + this.stats.currentHeight / 2;
+          this.velocity.y = 0;
+          return true;
+        }
       }
   
       else if (minimumOverlap === leftOverlap) {
@@ -1316,6 +1368,7 @@ class Player {
       // State triggers
       if (this.touchingTop) {
         this.state = "landing";
+        this.upSpecialAvailable = true;
 
         // Choose landing lag depending on the player's fall speed
         if (this.fastFalling) { 
@@ -1555,13 +1608,16 @@ class Player {
 
       // State behavior
       this.airMovement();
-      
+
+      let name = null;
+
       // Control the hitboxes
       if (this.currentAttack !== null) {
         
         // Update the frame and position
         this.currentAttack.currentFrame++;
         this.currentAttack.update(this.position.x, this.position.y, this.direction);
+        name = this.currentAttack.name;
         
         // Remove hitboxes that have ended
         if (this.currentAttack.currentFrame > this.currentAttack.totalFrames) {
@@ -1572,8 +1628,9 @@ class Player {
       // State triggers
       
       // If the opponent lands while air attacking
-      if (this.touchingTop) {
+      if (this.touchingTop && this.velocity.y >= 0) {
         this.state = "landing";
+        this.upSpecialAvailable = true;
         
         if (this.currentAttack !== null) {
           let currentFrame = this.currentAttack.currentFrame;
@@ -1604,7 +1661,12 @@ class Player {
       
       // If the opponent finishes the attack in the air
       else if (this.currentAttack === null) {
-        this.state = "airborne";
+        if (name === "marthUpSpecial") {
+          this.state = "specialFall";
+        }
+        else {
+          this.state = "airborne";
+        }
       }
 
       if (this.position.x > RIGHT_BLAST_ZONE || this.position.x < LEFT_BLAST_ZONE || this.position.y > BOTTOM_BLAST_ZONE || this.position.y < TOP_BLAST_ZONE) {
@@ -1726,6 +1788,7 @@ class Player {
       // If the opponent lands while air attacking
       else if (this.multihitAir && this.touchingTop) {
         this.state = "landing";
+        this.upSpecialAvailable = true;
         
         if (this.currentAttack !== null) {
           let currentFrame = this.currentAttack.currentFrame;
@@ -1791,15 +1854,21 @@ class Player {
       // State behavior
       this.airMovement();
 
-      let landingLag = this.currentAttack.landingLag;
+      // Control the hitboxes
+      if (this.currentAttack !== null) {
+        
+        // Update the frame and position
+        this.currentAttack.currentFrame++;
+        this.currentAttack.update(this.position.x, this.position.y, this.direction);
+      }
 
       // State triggers
 
-      if (this.touchingTop) {
+      if (this.touchingTop && this.velocity.y >= 0) {
         this.state = "landing";
 
         // Set the landing lag
-        this.landingLagTimer = landingLag;
+        this.landingLagTimer = this.upSpecialLag;
 
         // Remove the attack
         this.hitboxes = [];
@@ -1854,6 +1923,7 @@ class Player {
 
       // State behavior
       this.angelPlatform();
+      this.direction = this.spawnDirection;
 
       // State triggers
       if (keyIsDown(this.controls.down)) {
@@ -2112,7 +2182,7 @@ class Player {
       this.currentAttack.hasHit = false;
   
       // Change to proper attack state
-      this.state = "specialFall";
+      this.state = "airAttacking";
       this.upSpecialAvailable = false;
   
       // Play sound
@@ -2375,7 +2445,7 @@ class Stage {
     this.currentFrame = 0;
     this.totalFrames = 6;
     this.animationTimer = 0;
-    this.animationSpeed = 5;
+    this.animationSpeed = 7;
   }
 
   // Show the stage
@@ -2551,11 +2621,11 @@ function setup() {
 
   // Create player 1
   playerOne = new Player(PLAYER_ONE_START_X, PLAYER_ONE_START_Y - playerOneMarthStats.currentHeight / 2, 
-    playerOneMarthStats, playerOneControls, playerOneSounds, PLAYER_ONE_SPAWN_X, PLAYER_ONE_SPAWN_Y, true);
+    playerOneMarthStats, playerOneControls, playerOneSounds, PLAYER_ONE_SPAWN_X, PLAYER_ONE_SPAWN_Y, PLAYER_ONE_DIRECTION);
 
   // Create player 2
   playerTwo = new Player(PLAYER_TWO_START_X, PLAYER_TWO_START_Y - playerTwoMarthStats.currentHeight / 2, 
-    playerTwoMarthStats, playerTwoControls, playerTwoSounds, PLAYER_TWO_SPAWN_X, PLAYER_TWO_SPAWN_Y, false);
+    playerTwoMarthStats, playerTwoControls, playerTwoSounds, PLAYER_TWO_SPAWN_X, PLAYER_TWO_SPAWN_Y, PLAYER_TWO_DIRECTION);
 
   // Create stage
   stage = new Stage(STAGE_X, STAGE_Y, STAGE_WIDTH, STAGE_HEIGHT, 100);
@@ -2563,7 +2633,12 @@ function setup() {
 
 // Manage players
 function draw() {
-  
+
+  console.log(playerOne.state);
+  if (playerOne.currentAttack !== null) {
+    console.log(playerOne.currentAttack.name);
+  }
+
   // menu state
   if (gameState === "menu") {
     background(0);
@@ -2750,6 +2825,14 @@ function keyPressed() {
 
         // Up special
         if (keyIsDown(playerOne.controls.up) || keyIsDown(playerOne.controls.jump)) {
+
+          // Allow the player to change directions for the up special
+          if (keyIsDown(playerOne.controls.left)) {
+            playerOne.direction = false; // left
+          }
+          else if (keyIsDown(playerOne.controls.right)) {
+            playerOne.direction = true; // right
+          }
           playerOne.spawnSpecial(marthUpSpecial);
         }
       }
@@ -2867,6 +2950,15 @@ function keyPressed() {
 
         // Up special
         if (keyIsDown(playerTwo.controls.up) || keyIsDown(playerTwo.controls.jump)) {
+
+          // Allow the player to change directions for the up special
+          if (keyIsDown(playerTwo.controls.left)) {
+            playerTwo.direction = false; // left
+          }
+          else if (keyIsDown(playerTwo.controls.right)) {
+            playerTwo.direction = true; // right
+          }
+
           playerTwo.spawnSpecial(marthUpSpecial);
         }
       }
@@ -2921,6 +3013,10 @@ function keyPressed() {
       playerTwo.currentAttack = null;
       playerOne.stocks = PLAYER_STOCKS;
       playerTwo.stocks = PLAYER_STOCKS;
+      playerOne.invincible = false;
+      playerTwo.invincible = false;
+      playerOne.direction = true;
+      playerTwo.direction = false;
       winner = null;
     }
   }
