@@ -69,12 +69,6 @@ const INCREASED_OPACITY = 150;
 let winner = null;
 
 // Player 1 constants and variables
-const PLAYER_ONE_START_X = 520;
-const PLAYER_ONE_START_Y = 550;
-const PLAYER_ONE_SPAWN_X = 520;
-const PLAYER_ONE_SPAWN_Y = 200;
-const PLAYER_ONE_STOCK_X = 2350;
-const PLAYER_ONE_STOCK_Y = 3850;
 const PLAYER_ONE_DIRECTION = true;
 
 let playerOneStartX;
@@ -100,13 +94,14 @@ let playerOneControls = {
 };
 
 // Player 2 constants and variables
-const PLAYER_TWO_START_X = 920;
-const PLAYER_TWO_START_Y = 550;
-const PLAYER_TWO_SPAWN_X = 920;
-const PLAYER_TWO_SPAWN_Y = 200;
-const PLAYER_TWO_STOCK_X = 4350;
-const PLAYER_TWO_STOCK_Y = 3850;
 const PLAYER_TWO_DIRECTION = false;
+
+let playerTwoStartX;
+let playerTwoStartY;
+let playerTwoSpawnX;
+let playerTwoSpawnY;
+let playerTwoStockX;
+let playerTwoStockY;
 
 let playerTwo;
 
@@ -252,7 +247,7 @@ let playerTwoMarthStats = {
   crouchHeight: 40,
   offsetCrouchHeight: 20,
   name: "P2",
-  upSpecialPower: -17,
+  upSpecialPower: -20,
 };
 
 // Marth attacks
@@ -820,18 +815,18 @@ class Player {
   // Display the player and hitboxes
   display() {
 
-    // Draw player from the center
-    rectMode(CENTER);
+    // // Draw player from the center
+    // rectMode(CENTER);
 
-    // Square to represent the player
-    noStroke();
-    fill(this.stats.color);
-    rect(this.position.x, this.position.y, this.stats.width, this.stats.currentHeight);
+    // // Square to represent the player
+    // noStroke();
+    // fill(this.stats.color);
+    // rect(this.position.x, this.position.y, this.stats.width, this.stats.currentHeight);
 
-    // Draw hitboxes
-    if (this.currentAttack !== null) {
-      this.currentAttack.display();
-    }
+    // // Draw hitboxes
+    // if (this.currentAttack !== null) {
+    //   this.currentAttack.display();
+    // }
 
     // Pull the current animation as well as the current frame
     let currentAnimationData = this.animations.get(this.currentAnimation);
@@ -1859,14 +1854,6 @@ class Player {
       // State behavior
       this.airMovement();
 
-      // Control the hitboxes
-      if (this.currentAttack !== null) {
-        
-        // Update the frame and position
-        this.currentAttack.currentFrame++;
-        this.currentAttack.update(this.position.x, this.position.y, this.direction);
-      }
-
       // State triggers
 
       if (this.touchingTop && this.velocity.y >= 0) {
@@ -2404,6 +2391,11 @@ class Attack {
         if (this.angle === SAKURAI_SPECIAL_ANGLE && !attacker.direction) {
           finalAngle = 180 - finalAngle;
         }
+
+        // Send the opponent up if grounded down air hits
+        if (this.name === "marthDownAir" && defender.touchingTop) {
+          finalAngle = -90;
+        }
   
         // Calculate angle
         let radianAngle = radians(finalAngle);
@@ -2458,9 +2450,9 @@ class Stage {
   display(playerOne, playerTwo) {
 
     // Hitbox
-    rectMode(CORNER);
-    fill("white");
-    rect(this.x, this.y, this.w, this.h);
+    // rectMode(CORNER);
+    // fill("white");
+    // rect(this.x, this.y, this.w, this.h);
 
     // Shuffle through frames
     let frameX = this.currentFrame * this.frameWidth;
@@ -2502,7 +2494,7 @@ class Stage {
     // Show the players
     textSize(PLAYER_NAME_TEXT_SIZE);
     text("PLAYER 1", playerOneStartX, DAMAGE_METER_Y + DAMAGE_METER_GAP);
-    text("PLAYER 2", PLAYER_TWO_START_X, DAMAGE_METER_Y + DAMAGE_METER_GAP);
+    text("PLAYER 2", playerTwoStartX, DAMAGE_METER_Y + DAMAGE_METER_GAP);
 
     // Show the percent
     textSize(DAMAGE_METER_TEXT_SIZE);
@@ -2510,14 +2502,14 @@ class Stage {
     let playerTwoPercent = String(playerTwo.percentage);
 
     text(playerOnePercent + "%", playerOneStartX, DAMAGE_METER_Y);
-    text(playerTwoPercent + "%", PLAYER_TWO_START_X, DAMAGE_METER_Y);
+    text(playerTwoPercent + "%", playerTwoStartX, DAMAGE_METER_Y);
 
     // Show the stocks
     for (let i = 0; i < playerOne.stocks; i++) {
       push();
       scale(MARTH_ICON_SCALE_FACTOR, MARTH_ICON_SCALE_FACTOR);
       imageMode(CORNER);
-      image(marthIcon, playerOneStockX + i * MARTH_ICON_GAP, playerOneStockX);
+      image(marthIcon, playerOneStockX + i * MARTH_ICON_GAP, playerOneStockY);
       pop();
     }
 
@@ -2525,7 +2517,7 @@ class Stage {
       push();
       scale(MARTH_ICON_SCALE_FACTOR, MARTH_ICON_SCALE_FACTOR);
       imageMode(CORNER);
-      image(marthIcon, PLAYER_TWO_STOCK_X + i * MARTH_ICON_GAP, PLAYER_TWO_STOCK_Y);
+      image(marthIcon, playerTwoStockX + i * MARTH_ICON_GAP, playerTwoStockY);
       pop();
     }
   }
@@ -2648,7 +2640,7 @@ function setup() {
   playerTwoStartY = windowHeight - STAGE_Y_OFFSET;
   playerTwoSpawnX = playerTwoStartX;
   playerTwoSpawnY = 300;
-  playerTwoStockX = 3500;
+  playerTwoStockX = 5000;
   playerTwoStockY = 3850;
 
   // Create player 1
@@ -2656,8 +2648,8 @@ function setup() {
     playerOneMarthStats, playerOneControls, playerOneSounds, playerOneSpawnX, playerOneSpawnY, PLAYER_ONE_DIRECTION);
 
   // Create player 2
-  playerTwo = new Player(PLAYER_TWO_START_X, PLAYER_TWO_START_Y - playerTwoMarthStats.currentHeight / 2, 
-    playerTwoMarthStats, playerTwoControls, playerTwoSounds, PLAYER_TWO_SPAWN_X, PLAYER_TWO_SPAWN_Y, PLAYER_TWO_DIRECTION);
+  playerTwo = new Player(playerTwoStartX, playerTwoStartY - playerTwoMarthStats.currentHeight / 2, 
+    playerTwoMarthStats, playerTwoControls, playerTwoSounds, playerTwoSpawnX, playerTwoSpawnY, PLAYER_TWO_DIRECTION);
 
   // Create stage
   stage = new Stage(stageX, stageY, STAGE_WIDTH, STAGE_HEIGHT, 100);
@@ -2665,11 +2657,6 @@ function setup() {
 
 // Manage players
 function draw() {
-
-  console.log(playerOne.state);
-  if (playerOne.currentAttack !== null) {
-    console.log(playerOne.currentAttack.name);
-  }
 
   // menu state
   if (gameState === "menu") {
@@ -2785,7 +2772,7 @@ function keyPressed() {
       if (keyCode === playerOne.controls.attack || keyCode === playerOne.controls.forwardTilt) {
   
         // Attacks from idle state
-        if (playerOne.state === "idle") {
+        if (playerOne.state === "idle" || playerOne.state === "running") {
   
           // Attacking left and right
           if (keyIsDown(playerOne.controls.forwardTilt)) {
@@ -2910,7 +2897,7 @@ function keyPressed() {
       if (keyCode === playerTwo.controls.attack || keyCode === playerTwo.controls.forwardTilt) {
   
         // Attacks from idle state
-        if (playerTwo.state === "idle") {
+        if (playerTwo.state === "idle" || playerTwo.state === "running") {
 
           // Attacking forward
           if (keyIsDown(playerTwo.controls.forwardTilt)) {
@@ -3038,7 +3025,7 @@ function keyPressed() {
       playerOne.state = "entrance";
       playerTwo.state = "entrance";
       playerOne.position.set(playerOneStartX, playerOneStartY - playerOneMarthStats.currentHeight / 2);
-      playerTwo.position.set(PLAYER_TWO_START_X, PLAYER_TWO_START_Y - playerTwoMarthStats.currentHeight / 2);
+      playerTwo.position.set(playerTwoStartX, playerTwoStartY - playerTwoMarthStats.currentHeight / 2);
       playerOne.velocity.set(0, 0);
       playerTwo.velocity.set(0, 0);
       playerOne.hitboxes = [];
