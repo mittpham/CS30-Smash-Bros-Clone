@@ -497,6 +497,93 @@ let marthUpSpecial = {
   autoCancelEnd: 999,
 };
 
+// Side special
+let marthSideSpecialOne = {
+  name: "marthSideSpecialOne",
+  offsetX: 60,
+  offsetY: 0,
+  width: 100,
+  height: 100,
+  startingFrames: 9,
+  activeFrames: 2,
+  endingFrames: 28,
+  damage: 3,
+  angle: 361, 
+  knockback: 25,
+  growthKnockback: 30,
+  shieldStun: 4,
+  transitionFrame: 12,
+  autoTransition: false,
+  landingLag: 18,
+  autoCancelStart: 0,
+  autoCancelEnd: 999,
+};
+
+let marthSideSpecialTwo = {
+  name: "marthSideSpecialTwo",
+  offsetX: 60,
+  offsetY: 0,
+  width: 100,
+  height: 100,
+  startingFrames: 5,
+  activeFrames: 2,
+  endingFrames: 31,
+  damage: 3,
+  angle: 361,
+  knockback: 30,
+  growthKnockback: 25,
+  shieldStun: 4,
+  transitionFrame: 8,
+  autoTransition: false,
+  landingLag: 18,
+  autoCancelStart: 0,
+  autoCancelEnd: 999,
+};
+
+let marthSideSpecialThree = {
+  name: "marthSideSpecialThree",
+  offsetX: 60,
+  offsetY: 0,
+  width: 100,
+  height: 100,
+  startingFrames: 4,
+  activeFrames: 2,
+  endingFrames: 37,
+  damage: 4,
+  angle: 55,
+  knockback: 55,
+  growthKnockback: 30,
+  shieldStun: 5,
+  transitionFrame: 7,
+  autoTransition: false,
+  landingLag: 18,
+  autoCancelStart: 0,
+  autoCancelEnd: 999,
+};
+
+let marthSideSpecialFour = {
+  name: "marthSideSpecialFour",
+  offsetX: 60,
+  offsetY: 0,
+  width: 100,
+  height: 100,
+  startingFrames: 7,
+  activeFrames: 2,
+  endingFrames: 46,
+  damage: 6,
+  angle: 361,
+  knockback: 85,
+  growthKnockback: 125,
+  shieldStun: 6,
+  transitionFrame: null,
+  autoTransition: false,
+  landingLag: 18,
+  autoCancelStart: 0,
+  autoCancelEnd: 999,
+};
+
+let marthSideSpecial = [marthSideSpecialOne, marthSideSpecialTwo, marthSideSpecialThree, marthSideSpecialFour];
+
 // Create the base player
 class Player {
   constructor(x, y, stats, controls, sounds, spawnX, spawnY, direction) {
@@ -810,23 +897,81 @@ class Player {
     this.animations.set("specialFall", [
       [[1715, 2715, 36, 70], [1734, 2784]]
     ]);
+
+    this.animations.set("sideSpecialOne", [
+      [[55, 912, 39, 60], [74, 972]], 
+      [[164, 915, 39, 56], [186, 971]], 
+      [[285, 914, 35, 58], [300, 971]], 
+      [[389, 923, 45, 49], [407, 971]], 
+      [[506, 921, 91, 51], [519, 972]],
+      [[615, 907, 86, 65], [630, 972]],
+      [[716, 884, 52, 87], [741, 971]],
+      [[819, 916, 66, 56], [854, 972]],
+      [[938, 919, 55, 52], [963, 971]],
+      [[1058, 917, 41, 54], [1075, 970]],
+      [[1164, 917, 60, 55], [1185, 971]]
+    ]);
+
+    this.animations.set("sideSpecialTwo", [
+      [[30, 1002, 57, 61], [65, 1063]],
+      [[180, 999, 48, 64], [187, 1063]],
+      [[300, 1012, 90, 52], [307, 1064]],
+      [[422, 1021, 59, 43], [428, 1064]],
+      [[541, 1022, 56, 42], [548, 1064]],
+      [[661, 1017, 54, 47], [668, 1064]],
+      [[781, 1014, 53, 50], [788, 1064]],
+      [[901, 1015, 46, 49], [908, 1064]],
+      [[1023, 1009, 47, 55], [1031, 1064]],
+      [[1147, 1010, 38, 54], [1158, 1064]],
+      [[1261, 1007, 55, 57], [1281, 1064]],
+      [[1379, 1003, 54, 60], [1401, 1063]]
+    ]);
+
+    this.animations.set("sideSpecialThree", [
+      [[55, 912, 39, 60], [74, 972]], 
+      [[164, 915, 39, 56], [186, 971]], 
+      [[285, 914, 35, 58], [300, 971]], 
+      [[389, 923, 45, 49], [407, 971]], 
+      [[506, 921, 91, 51], [519, 972]],
+      [[615, 907, 86, 65], [630, 972]],
+      [[716, 884, 52, 87], [741, 971]],
+      [[819, 916, 66, 56], [854, 972]],
+      [[938, 919, 55, 52], [963, 971]],
+      [[1058, 917, 41, 54], [1075, 970]],
+      [[1164, 917, 60, 55], [1185, 971]]
+    ]);
+
+    this.animations.set("sideSpecialFour", [
+      [[30, 1002, 57, 61], [65, 1063]],
+      [[180, 999, 48, 64], [187, 1063]],
+      [[300, 1012, 90, 52], [307, 1064]],
+      [[422, 1021, 59, 43], [428, 1064]],
+      [[541, 1022, 56, 42], [548, 1064]],
+      [[661, 1017, 54, 47], [668, 1064]],
+      [[781, 1014, 53, 50], [788, 1064]],
+      [[901, 1015, 46, 49], [908, 1064]],
+      [[1023, 1009, 47, 55], [1031, 1064]],
+      [[1147, 1010, 38, 54], [1158, 1064]],
+      [[1261, 1007, 55, 57], [1281, 1064]],
+      [[1379, 1003, 54, 60], [1401, 1063]]
+    ]);
   }
 
   // Display the player and hitboxes
   display() {
 
-    // // Draw player from the center
-    // rectMode(CENTER);
+    // Draw player from the center
+    rectMode(CENTER);
 
-    // // Square to represent the player
-    // noStroke();
-    // fill(this.stats.color);
-    // rect(this.position.x, this.position.y, this.stats.width, this.stats.currentHeight);
+    // Square to represent the player
+    noStroke();
+    fill(this.stats.color);
+    rect(this.position.x, this.position.y, this.stats.width, this.stats.currentHeight);
 
-    // // Draw hitboxes
-    // if (this.currentAttack !== null) {
-    //   this.currentAttack.display();
-    // }
+    // Draw hitboxes
+    if (this.currentAttack !== null) {
+      this.currentAttack.display();
+    }
 
     // Pull the current animation as well as the current frame
     let currentAnimationData = this.animations.get(this.currentAnimation);
@@ -994,6 +1139,22 @@ class Player {
       else if (this.currentAttack.name === "marthUpSpecial") {
         this.animationSpeed = 2;
         newAnimation = "upSpecial";
+      }
+      else if (this.currentAttack.name === "marthSideSpecialOne") {
+        this.animationSpeed = 3.5;
+        newAnimation = "sideSpecialOne";
+      }
+      else if(this.currentAttack.name === "marthSideSpecialTwo") {
+        this.animationSpeed = 3.2;
+        newAnimation = "sideSpecialTwo";
+      }
+      else if (this.currentAttack.name === "marthSideSpecialThree") {
+        this.animationSpeed = 3.9;
+        newAnimation = "sideSpecialThree";
+      }
+      else if (this.currentAttack.name === "marthSideSpecialFour") {
+        this.animationSpeed = 4.6;
+        newAnimation = "sideSpecialFour";
       }
       else {
         this.animationSpeed = 8;
@@ -2844,8 +3005,13 @@ function keyPressed() {
       // Special attacks
       if (keyCode === playerOne.controls.special) {
 
+        // Attacks from multihitAttacking state
+        if (playerOne.state === "multihitAttacking") {
+          playerOne.multihitBuffer = playerOne.currentAttack.currentFrame;
+        }
+
         // Up special
-        if (keyIsDown(playerOne.controls.up) || keyIsDown(playerOne.controls.jump)) {
+        else if (keyIsDown(playerOne.controls.up) || keyIsDown(playerOne.controls.jump)) {
 
           // Allow the player to change directions for the up special
           if (keyIsDown(playerOne.controls.left)) {
@@ -2855,6 +3021,19 @@ function keyPressed() {
             playerOne.direction = true; // right
           }
           playerOne.spawnSpecial(marthUpSpecial);
+        }
+
+        // Side special
+        else if (keyIsDown(playerOne.controls.left) || keyIsDown(playerOne.controls.right)) {
+
+          // Grounded side special
+          if (playerOne.state === "grounded" || playerOne.state === "running") {
+            playerOne.spawnMultihit(marthSideSpecial, false);
+          }
+          // Aerial side special
+          else if (playerOne.state === "airborne") {
+            playerOne.spawnMultihit(marthSideSpecial, true);
+          }
         }
       }
     }
@@ -2969,8 +3148,13 @@ function keyPressed() {
       // Special attacks
       if (keyCode === playerTwo.controls.special) {
 
+        // Attacks from multihitAttacking state
+        if (playerTwo.state === "multihitAttacking") {
+          playerTwo.multihitBuffer = playerTwo.currentAttack.currentFrame;
+        }
+
         // Up special
-        if (keyIsDown(playerTwo.controls.up) || keyIsDown(playerTwo.controls.jump)) {
+        else if (keyIsDown(playerTwo.controls.up) || keyIsDown(playerTwo.controls.jump)) {
 
           // Allow the player to change directions for the up special
           if (keyIsDown(playerTwo.controls.left)) {
@@ -2981,6 +3165,19 @@ function keyPressed() {
           }
 
           playerTwo.spawnSpecial(marthUpSpecial);
+        }
+
+        // Side special
+        else if (keyIsDown(playerTwo.controls.left) || keyIsDown(playerTwo.controls.right)) {
+
+          // Grounded side special
+          if (playerTwo.state === "grounded" || playerTwo.state === "running") {
+            playerTwo.spawnMultihit(marthSideSpecial, false);
+          }
+          // Aerial side special
+          else if (playerTwo.state === "airborne") {
+            playerTwo.spawnMultihit(marthSideSpecial, true);
+          }
         }
       }
     }
