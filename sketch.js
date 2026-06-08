@@ -70,6 +70,7 @@ let winner = null;
 
 // Player 1 constants and variables
 const PLAYER_ONE_DIRECTION = true;
+const PLAYER_ONE_STOCK_X = 3250;
 
 let playerOneStartX;
 let playerOneStartY;
@@ -77,7 +78,6 @@ let playerOneSpawnX;
 let playerOneSpawnY;
 let playerOneStockX;
 let playerOneStockY;
-
 let playerOne;
 
 // Player 1 controls
@@ -95,6 +95,7 @@ let playerOneControls = {
 
 // Player 2 constants and variables
 const PLAYER_TWO_DIRECTION = false;
+const PLAYER_TWO_STOCK_X = 5250;
 
 let playerTwoStartX;
 let playerTwoStartY;
@@ -102,7 +103,6 @@ let playerTwoSpawnX;
 let playerTwoSpawnY;
 let playerTwoStockX;
 let playerTwoStockY;
-
 let playerTwo;
 
 // Player 2 controls
@@ -119,10 +119,13 @@ let playerTwoControls = {
 };
 
 // Stage constants and variables
+const SCREEN_WIDTH = 1800;
+const SCREEN_HEIGHT = 900;
 const STAGE_WIDTH = 800;
 const STAGE_HEIGHT = 50;
 const BLAST_ZONE_GAP = 100;
 const STAGE_Y_OFFSET = 318.5;
+const STOCK_Y_POSITION = 3850;
 
 let stageX;
 let stageY;
@@ -960,37 +963,41 @@ class Player {
   // Display the player and hitboxes
   display() {
 
-    // Draw player from the center
-    rectMode(CENTER);
+    // // Draw player from the center
+    // rectMode(CENTER);
 
-    // Square to represent the player
-    noStroke();
-    fill(this.stats.color);
-    rect(this.position.x, this.position.y, this.stats.width, this.stats.currentHeight);
+    // // Square to represent the player
+    // noStroke();
+    // fill(this.stats.color);
+    // rect(this.position.x, this.position.y, this.stats.width, this.stats.currentHeight);
 
-    // Draw hitboxes
-    if (this.currentAttack !== null) {
-      this.currentAttack.display();
-    }
+    // // Draw hitboxes
+    // if (this.currentAttack !== null) {
+    //   this.currentAttack.display();
+    // }
 
     // Pull the current animation as well as the current frame
     let currentAnimationData = this.animations.get(this.currentAnimation);
     let framePoints = currentAnimationData[this.currentFrame];
 
+    // Get the position, size and origin point
     let croppedPoints = framePoints[0];
     let originPoints = framePoints[1];
 
+    // Position and size of the frame
     let croppedX = croppedPoints[0];
     let croppedY = croppedPoints[1];
     let croppedW = croppedPoints[2];
     let croppedH = croppedPoints[3];
 
+    // Origin point and offset
     let originX = originPoints[0];
     let originY = originPoints[1];
     let offsetX = originX - croppedX;
     let offsetY = originY - croppedY;
 
 
+    // Keep the style only for the animations
     push();
 
     // Flip the animation if the direction is left
@@ -1030,7 +1037,7 @@ class Player {
   // Update the player’s state and movement
   update(player) {
 
-    // Animation marth
+    // Animations for marth
     this.updateAnimation();
 
     // Count down invincibility from angel platform
@@ -1173,6 +1180,7 @@ class Player {
     this.animationTimer++;
     let totalFrames = this.animations.get(this.currentAnimation).length;
 
+    // Move the frame once enough time has passed
     if (this.animationTimer >= this.animationSpeed) {
       this.currentFrame++;
       this.animationTimer = 0;
@@ -1222,6 +1230,8 @@ class Player {
 
   // Apply user input to player
   addVectors() {
+
+    // Add vectors
     this.velocity.add(this.acceleration);
     this.position.add(this.velocity);
     this.acceleration.mult(0);
@@ -1793,6 +1803,7 @@ class Player {
         this.state = "landing";
         this.upSpecialAvailable = true;
         
+        // Save the data from the attack
         if (this.currentAttack !== null) {
           let currentFrame = this.currentAttack.currentFrame;
           let autoCancelStartingWindow = this.currentAttack.autoCancelStart;
@@ -1822,6 +1833,8 @@ class Player {
       
       // If the opponent finishes the attack in the air
       else if (this.currentAttack === null) {
+
+        // Special case if up special is used, otherwise normal airborne
         if (name === "marthUpSpecial") {
           this.state = "specialFall";
         }
@@ -1951,6 +1964,7 @@ class Player {
         this.state = "landing";
         this.upSpecialAvailable = true;
         
+        // Save the data of the attack
         if (this.currentAttack !== null) {
           let currentFrame = this.currentAttack.currentFrame;
           let autoCancelStartingWindow = this.currentAttack.autoCancelStart;
@@ -2595,8 +2609,8 @@ class Stage {
 
     // Animation stage properties
     this.animationHeight = 300;
-    this.animationX = windowWidth / 2;
-    this.animationY = windowHeight - 200;
+    this.animationX = SCREEN_WIDTH / 2;
+    this.animationY = SCREEN_HEIGHT - 200;
 
     // Animation properties
     this.frameWidth = 456;
@@ -2739,7 +2753,7 @@ function preload() {
 
 // Setup player
 function setup() {
-  createCanvas(windowWidth, windowHeight);
+  createCanvas(SCREEN_WIDTH, SCREEN_HEIGHT);
 
   // Start background music
   backgroundMusic.setVolume(0.1);
@@ -2782,27 +2796,27 @@ function setup() {
   };
 
   // Set the stage position and blast zones
-  stageX = windowWidth / 2 - STAGE_WIDTH / 2;
-  stageY = windowHeight - STAGE_Y_OFFSET;
+  stageX = SCREEN_WIDTH / 2 - STAGE_WIDTH / 2;
+  stageY = SCREEN_HEIGHT - STAGE_Y_OFFSET;
   topBlastZone = -BLAST_ZONE_GAP;
   leftBlastZone = -BLAST_ZONE_GAP;
-  bottomBlastZone = windowHeight + BLAST_ZONE_GAP;
-  rightBlastZone = windowWidth + BLAST_ZONE_GAP;
+  bottomBlastZone = SCREEN_HEIGHT + BLAST_ZONE_GAP;
+  rightBlastZone = SCREEN_WIDTH + BLAST_ZONE_GAP;
 
   // Set up player positions
-  playerOneStartX = windowWidth / 2 - 200;
-  playerOneStartY = windowHeight - STAGE_Y_OFFSET;
+  playerOneStartX = SCREEN_WIDTH / 2 - 200;
+  playerOneStartY = SCREEN_HEIGHT - STAGE_Y_OFFSET;
   playerOneSpawnX = playerOneStartX;
-  playerOneSpawnY = 300;
-  playerOneStockX = 3000;
-  playerOneStockY = 3850;
+  playerOneSpawnY = SCREEN_HEIGHT / 3;
+  playerOneStockX = PLAYER_ONE_STOCK_X;
+  playerOneStockY = STOCK_Y_POSITION;
   
-  playerTwoStartX = windowWidth / 2 + 200;
-  playerTwoStartY = windowHeight - STAGE_Y_OFFSET;
+  playerTwoStartX = SCREEN_WIDTH / 2 + 200;
+  playerTwoStartY = SCREEN_HEIGHT - STAGE_Y_OFFSET;
   playerTwoSpawnX = playerTwoStartX;
-  playerTwoSpawnY = 300;
-  playerTwoStockX = 5000;
-  playerTwoStockY = 3850;
+  playerTwoSpawnY = SCREEN_HEIGHT / 3;
+  playerTwoStockX = PLAYER_TWO_STOCK_X;
+  playerTwoStockY = STOCK_Y_POSITION;
 
   // Create player 1
   playerOne = new Player(playerOneStartX, playerOneStartY - playerOneMarthStats.currentHeight / 2, 
@@ -2844,7 +2858,7 @@ function draw() {
 
     // Display background
     imageMode(CORNER);
-    image(stageBackground, 0, 0, windowWidth, windowHeight);
+    image(stageBackground, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 
     // Show countdown
     countDown();
@@ -2855,7 +2869,7 @@ function draw() {
 
     // Display background
     imageMode(CORNER);
-    image(stageBackground, 0, 0, windowWidth, windowHeight);
+    image(stageBackground, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 
     noStroke();
   
@@ -3035,7 +3049,7 @@ function keyPressed() {
           }
 
           // Grounded side special
-          if (playerOne.state === "grounded" || playerOne.state === "running") {
+          if (playerOne.state === "idle" || playerOne.state === "running") {
             playerOne.spawnMultihit(marthSideSpecial, false);
           }
           // Aerial side special
@@ -3187,7 +3201,7 @@ function keyPressed() {
           }
 
           // Grounded side special
-          if (playerTwo.state === "grounded" || playerTwo.state === "running") {
+          if (playerTwo.state === "idle" || playerTwo.state === "running") {
             playerTwo.spawnMultihit(marthSideSpecial, false);
           }
           // Aerial side special
