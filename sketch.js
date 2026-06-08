@@ -3026,6 +3026,14 @@ function keyPressed() {
         // Side special
         else if (keyIsDown(playerOne.controls.left) || keyIsDown(playerOne.controls.right)) {
 
+          // Allow the player to change directions for the side special
+          if (keyIsDown(playerOne.controls.left)) {
+            playerOne.direction = false; // left
+          }
+          else if (keyIsDown(playerOne.controls.right)) {
+            playerOne.direction = true; // right
+          }
+
           // Grounded side special
           if (playerOne.state === "grounded" || playerOne.state === "running") {
             playerOne.spawnMultihit(marthSideSpecial, false);
@@ -3169,6 +3177,14 @@ function keyPressed() {
 
         // Side special
         else if (keyIsDown(playerTwo.controls.left) || keyIsDown(playerTwo.controls.right)) {
+
+          // Allow the player to change directions for the side special
+          if (keyIsDown(playerTwo.controls.left)) {
+            playerTwo.direction = false; // left
+          }
+          else if (keyIsDown(playerTwo.controls.right)) {
+            playerTwo.direction = true; // right
+          }
 
           // Grounded side special
           if (playerTwo.state === "grounded" || playerTwo.state === "running") {
