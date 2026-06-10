@@ -17,7 +17,6 @@
 // https://www.ssbwiki.com/Tumbling - tumbling
 // https://www.ssbwiki.com/Rage - rage
 // https://www.ssbwiki.com/Sakurai_angle - Sakurai's special angle
-// https://editor.p5js.org/jesse_harding/sketches/dzF-WbKuk - platform collision
 // https://www.youtube.com/playlist?list=PLf9yt-2olqyLxr-vouWl-qk4toUfjF2LC - street fighter clone
 // https://www.reddit.com/r/smashbros/comments/1h78zyq/how_does_an_attacks_frames_on_shield_and_ending/ - how end lag works with frames
 // https://www.youtube.com/watch?v=ht3bZcLxBlQ - smash mechanics explanation
@@ -31,13 +30,10 @@
 // https://www.youtube.com/watch?v=6JYnDGh5mCE&list=PLYzPRovwO_fOl0WuwqizjhPLbIwnks8Lg&index=6 - music
 // https://www.myinstants.com/en/instant/3-2-1-go-87996/?utm_source=copy&utm_medium=share - announcer countdown
 // https://www.youtube.com/watch?v=FIV4jXtg6-s&list=RDFIV4jXtg6-s&start_radio=1 - game end sound
-// https://www.youtube.com/watch?v=7HzxdnW2gaI - marth win sound
 // https://www.youtube.com/watch?v=14dHroamo2E - final ko sound
 // https://www.myinstants.com/en/instant/stage-fallout-super-smash-bros-ultimate-16980/ - regular death sound
 // https://www.myinstants.com/en/instant/game-super-smash-bros-6647/ - announcer game sound
-// https://sounds.spriters-resource.com/wii_u/supersmashbrosforwiiu/asset/397960/ - more marth sounds
 // https://www.hiclipart.com/free-transparent-background-png-clipart-vvulw - marth icon
-// https://www.spriters-resource.com/custom_edited/supersmashbroscustoms/asset/196310/ - marth portrait
 // https://www.youtube.com/watch?v=6znq-EYa8C0&list=RD6znq-EYa8C0&start_radio=1 - menu music
 
 // Universal player variables and constants
@@ -146,7 +142,7 @@ const DAMAGE_METER_TEXT_SIZE = 40;
 const DAMAGE_METER_Y = 730;
 const PLAYER_NAME_TEXT_SIZE = 20;
 const DAMAGE_METER_GAP = 30;
-const MENU_TEXT_SIZE = 70;
+const MENU_TEXT_SIZE = 30;
 const CONTROLS_TEXT_SIZE = 40;
 
 let countdownTimer = 180;
@@ -3298,14 +3294,23 @@ function displayControls() {
     U forward tilt
     Q shorthop
     E up
+
     PLAYER TWO CONTROLS:
     ARROWS movement
     0 attack
     . special
     Enter forward tilt
     Shift shorthop
-    1 up
-    Press M to go back to the menu`, width / 2, height / 2);
+    1 up`, width / 4, height / 2);
+  text(`The point of this game is to 
+    knock your opponent off the stage.
+    Pressing a direction while using attack 
+    will give you different attacks both 
+    on the ground and in the air.
+    You can also do the same with the special
+     button, although there are 
+     only 2 specials: up and side.
+     Press M to go back to the menu`, width * 3 / 4, height / 2);
 }
 
 // Start the countdown before the game starts
