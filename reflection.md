@@ -12,4 +12,4 @@
 
 ## Were there any problems you could not solve?
 - The players are able to irregularly move after getting hit in the air, which is not present in the real Super Smash Bros Ultimate.
-- I was not able to properly implement certain animations, because the start
+- I was not able to properly implement certain animations, because the startup of the animations would be apart of the loop and I did not find enough time to solve that.
